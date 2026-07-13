@@ -234,7 +234,7 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
           ),
           h('div',{style:{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:10}},
             suggestion ? h('span',{style:{fontSize:11,color:'var(--gold)',background:'rgba(244,196,105,.1)',border:'1px solid rgba(244,196,105,.25)',borderRadius:99,padding:'4px 10px'}}, `🎯 مقترح: ${suggestion} كجم`) : null,
-            coachNote ? h('span',{style:{fontSize:11,color:'var(--accent2)',background:'rgba(91,140,255,.1)',border:'1px solid rgba(91,140,255,.25)',borderRadius:99,padding:'4px 10px'}}, `🧠 ${coachNote}`) : null,
+            coachNote ? h('span',{style:{fontSize:11,color:'var(--accent2)',background:'rgba(var(--accent-rgb),.08)',border:'1px solid rgba(var(--accent-rgb),.25)',borderRadius:99,padding:'4px 10px'}}, `🧠 ${coachNote}`) : null,
             info ? h('button',{onClick:()=>setOpenDetail(prev=>({...prev,[key]:!prev[key]})), style:{fontSize:11,color:'var(--accent2)',background:'transparent',border:'1px solid var(--line)',borderRadius:99,padding:'4px 10px',cursor:'pointer'}}, 'ℹ️ التفاصيل والبدائل') : null
           ),
           (info && openDetail[key]) ? h('div',{style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,padding:'10px 12px',marginBottom:10,fontSize:12,color:'var(--muted)'}},
@@ -245,7 +245,7 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
             h('label',{style:{fontSize:10,color:'var(--muted)'}},'كجم', h('input',{type:'number', step:'0.5', value:row.weight, placeholder:i===0&&suggestion?String(suggestion):'', onChange:e=>updateSetField(key,i,'weight',e.target.value), style:{width:'100%',marginTop:4,background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--line)',borderRadius:10,padding:'10px 6px',textAlign:'center'}})),
             h('label',{style:{fontSize:10,color:'var(--muted)'}},'عدات', h('input',{type:'number', value:row.reps, onChange:e=>updateSetField(key,i,'reps',e.target.value), style:{width:'100%',marginTop:4,background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--line)',borderRadius:10,padding:'10px 6px',textAlign:'center'}})),
             h('label',{style:{fontSize:10,color:'var(--muted)'}},'RIR', h('input',{type:'number', min:0, max:5, value:row.rir, onChange:e=>updateSetField(key,i,'rir',e.target.value), style:{width:'100%',marginTop:4,background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--line)',borderRadius:10,padding:'10px 6px',textAlign:'center'}})),
-            h('button',{onClick:()=>toggleDone(key,i), style:{height:40,borderRadius:11,border:'1px solid var(--line)',background:row.done?'var(--good)':'#1a2131',color:row.done?'#052018':'#fff',cursor:'pointer'}}, '✓'),
+            h('button',{onClick:()=>toggleDone(key,i), style:{height:40,borderRadius:11,border:'1px solid var(--line)',background:row.done?'var(--good)':'var(--surface2)',color:row.done?'var(--bg)':'var(--text)',cursor:'pointer'}}, '✓'),
             h('button',{onClick:()=>removeSet(key,i), style:{height:40,borderRadius:11,border:'1px solid var(--line)',background:'transparent',color:'var(--danger)',cursor:'pointer'}}, '×')
           )),
           h('button',{onClick:()=>addSet(key), style:{marginTop:10,width:'100%',background:'transparent',border:'1px dashed var(--line)',color:'var(--muted)',borderRadius:12,padding:9,cursor:'pointer'}}, '+ إضافة جولة'),

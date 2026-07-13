@@ -1,5 +1,38 @@
 window.AF = window.AF || {};
 
+function buildCoachMessages(c, streak, todayWorkout, todayNutrition, t){
+  const msgs = [];
+  const name = c.name || '';
+  if(streak>=7) msgs.push(`🔥 ${streak} يوم التزام متواصل يا ${name}! هذا مستوى احترافي، لا توقف الحين.`);
+  else if(streak>=1) msgs.push(`🔥 عندك ${streak} ${streak===1?'يوم':'أيام'} التزام — كمّل نفس الوتيرة واستهدف أسبوع كامل.`);
+  else msgs.push(`💪 يلا ${name}، ابدأ حصة اليوم وخلك أول يوم بسلسلة جديدة.`);
+
+  const proteinPct = t.protein ? Math.round(todayNutrition.protein/t.protein*100) : 0;
+  if(proteinPct<50) msgs.push(`🍗 بروتينك اليوم لسا ${Math.round(todayNutrition.protein)} من ${t.protein} جم — جرّب تضيف زبادي يوناني أو صدر دجاج.`);
+  else if(proteinPct>=100) msgs.push(`✅ وصلت هدف البروتين اليوم (${Math.round(todayNutrition.protein)} جم) — ممتاز!`);
+  else msgs.push(`🍽️ باقي عليك ${Math.max(0,t.protein-Math.round(todayNutrition.protein))} جم بروتين عشان توصل هدفك اليوم.`);
+
+  const last = c.history[c.history.length-1];
+  if(last){
+    const daysSince = Math.round((Date.now()-new Date(last.date).getTime())/86400000);
+    if(daysSince>=3) msgs.push(`⏰ آخر تمرين لك كان قبل ${daysSince} أيام (${last.name}) — وقت مناسب ترجع للجدول.`);
+    else msgs.push(`👏 آخر حصة (${last.name}) كانت قبل ${daysSince===0?'اليوم':daysSince+' يوم'} — استمر بنفس الزخم.`);
+  } else {
+    msgs.push(`🆕 ما سجّلت أي تمرين بعد — ابدأ بـ ${todayWorkout.name} اليوم وخلنا نبني السجل من الصفر.`);
+  }
+
+  const newPRs = Object.values(c.prs).filter(v=>Date.now()-new Date(v.date).getTime() <= 7*86400000);
+  if(newPRs.length) msgs.push(`🏆 سجّلت ${newPRs.length} رقم قياسي جديد هالأسبوع — أداء قوي!`);
+
+  const ms = c.measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(ms.length>=2){
+    const delta = +(ms[ms.length-1].weight-ms[0].weight).toFixed(1);
+    if(Math.abs(delta)>=0.3) msgs.push(delta<0 ? `📉 وزنك نازل ${Math.abs(delta)} كجم منذ أول قياس — استمر.` : `📈 وزنك زاد ${delta} كجم منذ أول قياس — راجع سعراتك لو الهدف تنشيف.`);
+  }
+
+  return msgs;
+}
+
 AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen}){
   const c = cur();
   const p = c.profile;
@@ -17,11 +50,22 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
     .reduce((a,l)=>({cal:a.cal+l.cal, protein:a.protein+l.protein}), {cal:0,protein:0});
   const t = c.nutrition.targets;
 
+  const coachMsgs = React.useMemo(()=>buildCoachMessages(c, streak, todayWorkout, todayNutrition, t), [c.history.length, c.nutrition.logs.length, c.measurements.length]);
+  const [msgIdx, setMsgIdx] = React.useState(0);
+  React.useEffect(()=>{
+    const id = setInterval(()=>setMsgIdx(i=>(i+1)%coachMsgs.length), 7000);
+    return ()=>clearInterval(id);
+  },[coachMsgs.length]);
+
+  const ms = c.measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const firstWeight = ms[0]?.weight;
+  const weightDelta = (firstWeight!=null) ? +(p.weight-firstWeight).toFixed(1) : null;
+
   return h(React.Fragment, null,
     draft ? h('div',{style:{
       display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,
-      background:'linear-gradient(135deg, rgba(91,140,255,.16), rgba(139,123,255,.08))',
-      border:'1px solid rgba(91,140,255,.3)',borderRadius:18,padding:'14px 16px',marginBottom:14
+      background:'linear-gradient(135deg, rgba(var(--accent-rgb),.1), rgba(var(--accent-rgb),.03))',
+      border:'1px solid rgba(var(--accent-rgb),.2)',borderRadius:18,padding:'14px 16px',marginBottom:14
     }},
       h('div',null,
         h('b',{style:{display:'block'}},'عندك حصة غير مكتملة'),
@@ -35,20 +79,23 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
       h('h2',{style:{margin:'4px 0 0'}}, '🔥 اليوم')
     ),
 
-    h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}},
-      h(AF.StatCard,{label:'النوم', value:dayLog.sleep??'—', unit:'ساعة'}),
-      h(AF.StatCard,{label:'الوزن', value:p.weight, unit:'كجم'}),
-      h(AF.StatCard,{label:'السعرات', value:`${Math.round(todayNutrition.cal)} / ${t.calories}`}),
-      h(AF.StatCard,{label:'البروتين', value:`${Math.round(todayNutrition.protein)} / ${t.protein}`, unit:'جم'}),
-      h(AF.StatCard,{label:'الخطوات', value:(dayLog.steps||0).toLocaleString('en-US')}),
-      h(AF.StatCard,{label:'الالتزام', value:streak, unit:streak===1?'يوم':'أيام'})
+    h('button',{onClick:()=>showScreen('coach'), style:{
+      width:'100%', textAlign:'right', border:'1px solid var(--line)', borderRadius:18, padding:'16px 18px', cursor:'pointer',
+      background:'var(--surface)', color:'var(--text)', display:'flex', gap:12, alignItems:'flex-start', marginBottom:14
+    }},
+      h('span',{style:{fontSize:24,flex:'0 0 auto'}}, '🤖'),
+      h('div',{style:{flex:1}},
+        h('span',{style:{display:'block',color:'var(--muted)',fontSize:11,marginBottom:4}},'المدرب الذكي'),
+        h('span',{key:msgIdx, style:{display:'block',fontSize:14,lineHeight:1.6,animation:'coachFade .4s ease'}}, coachMsgs[msgIdx])
+      )
     ),
 
     h(AF.Panel,null,
+      h(AF.SectionTitle,{title:'🏋️ لوحة التمارين', right:'تمرين اليوم'}),
       h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
         h('div',null,
-          h('span',{style:{display:'block',color:'var(--muted)',fontSize:12}},'تمرين اليوم'),
-          h('b',{style:{fontSize:20}}, todayWorkout.name)
+          h('b',{style:{fontSize:20,display:'block'}}, todayWorkout.name),
+          h('span',{style:{color:'var(--muted)',fontSize:12}}, `الالتزام: ${streak} ${streak===1?'يوم':'أيام'}`)
         ),
         h(AF.PrimaryBtn,{onClick:()=>openWorkout(todayWorkout.id)}, 'ابدأ الآن')
       ),
@@ -59,10 +106,34 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
       ) : null
     ),
 
-    h('button',{onClick:()=>showScreen('coach'), style:{
-      width:'100%', marginTop:14, border:0, borderRadius:18, padding:18, cursor:'pointer',
-      background:'linear-gradient(135deg, var(--violet), var(--accent2))', color:'#fff', fontWeight:800,
-      display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:15
-    }}, h('span',null,'🤖 المدرب الذكي الأسبوعي'), h('span',null,'التحليل والتوصيات ›'))
+    h(AF.Panel,{style:{cursor:'pointer'}},
+      h('div',{onClick:()=>showScreen('nutrition')},
+        h(AF.SectionTitle,{title:'🍗 لوحة الأكل', right:'اليوم'}),
+        h('div',{style:{display:'flex',alignItems:'center',gap:18}},
+          h(AF.RingChart,{percent:t.calories?Math.min(100,Math.round(todayNutrition.cal/t.calories*100)):0, label:Math.round(todayNutrition.cal), sub:'سعرة', size:76}),
+          h('div',{style:{flex:1,display:'grid',gap:8}},
+            h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:13}}, h('span',{style:{color:'var(--muted)'}},'السعرات'), h('b',null, `${Math.round(todayNutrition.cal)} / ${t.calories}`)),
+            h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:13}}, h('span',{style:{color:'var(--muted)'}},'البروتين'), h('b',null, `${Math.round(todayNutrition.protein)} / ${t.protein} جم`)),
+            h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:13}}, h('span',{style:{color:'var(--muted)'}},'الخطوات'), h('b',null, (dayLog.steps||0).toLocaleString('en-US')))
+          )
+        )
+      )
+    ),
+
+    h(AF.Panel,{style:{cursor:'pointer'}},
+      h('div',{onClick:()=>showScreen('progress')},
+        h(AF.SectionTitle,{title:'📈 لوحة تغيّر الجسم', right:'التقدم'}),
+        h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}},
+          h('div',null, h('b',{style:{fontSize:18,display:'block'}}, p.weight), h('span',{style:{fontSize:11,color:'var(--muted)'}},'الوزن الحالي')),
+          h('div',{style:{borderRight:'1px solid var(--line)'}}, h('b',{style:{fontSize:18,display:'block'}}, p.goal), h('span',{style:{fontSize:11,color:'var(--muted)'}},'الهدف')),
+          h('div',{style:{borderRight:'1px solid var(--line)'}},
+            h('b',{style:{fontSize:18,display:'block',color:weightDelta==null?'var(--text)':(weightDelta<0?'var(--good)':(weightDelta>0?'var(--danger)':'var(--text)'))}},
+              weightDelta==null?'—':`${weightDelta>0?'+':''}${weightDelta}`
+            ),
+            h('span',{style:{fontSize:11,color:'var(--muted)'}},'التغير الكلي كجم')
+          )
+        )
+      )
+    )
   );
 };

@@ -2,7 +2,7 @@ window.AF = window.AF || {};
 
 AF.Panel = function({children, style}){
   return h('section',{style:Object.assign({
-    background:'linear-gradient(145deg, var(--surface), #0c121c)',
+    background:'linear-gradient(145deg, var(--surface), var(--panel-end))',
     border:'1px solid var(--line)', borderRadius:22, padding:18, marginTop:14,
     boxShadow:'var(--shadow)'
   },style)}, children);
@@ -26,7 +26,7 @@ AF.StatCard = function({label, value, unit}){
 AF.PrimaryBtn = function({children, onClick, style, type}){
   return h('button',{type:type||'button', onClick, style:Object.assign({
     border:0,borderRadius:14,padding:'13px 16px',fontWeight:800,
-    background:'linear-gradient(135deg, var(--accent), var(--accent2))', color:'#04140f', cursor:'pointer'
+    background:'linear-gradient(135deg, var(--accent), var(--accent2))', color:'var(--bg)', cursor:'pointer'
   },style)}, children);
 };
 AF.SecondaryBtn = function({children, onClick, style, type}){
@@ -79,7 +79,7 @@ AF.BottomNav = function({active, onNav}){
     borderRadius:20,padding:7,zIndex:20
   }},
     items.map(it=>h('button',{key:it.id, onClick:()=>onNav(it.id), style:{
-      border:0,background:active===it.id?'rgba(40,224,184,.13)':'transparent',
+      border:0,background:active===it.id?'rgba(var(--accent-rgb),.13)':'transparent',
       color:active===it.id?'var(--accent)':'var(--muted)',borderRadius:14,padding:8,
       display:'grid',gap:2,placeItems:'center',cursor:'pointer'
     }},
@@ -97,7 +97,7 @@ AF.TabBar = function({tabs, active, onChange}){
     tabs.map(t=>h('button',{key:t.id, onClick:()=>onChange(t.id), style:{
       border:0, borderRadius:12, padding:'10px 2px', fontWeight:800, fontSize:12, cursor:'pointer',
       background:active===t.id?'linear-gradient(135deg, var(--accent2), var(--violet))':'transparent',
-      color:active===t.id?'#fff':'var(--muted)'
+      color:active===t.id?'var(--bg)':'var(--muted)'
     }}, t.label))
   );
 };

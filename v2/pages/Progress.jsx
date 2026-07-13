@@ -134,7 +134,7 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
       h(AF.Panel,null, h(AF.LineChart,{points:weightPoints, unit:' كجم', color:'var(--accent2)'}),
         forecast ? h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}}, forecast) : null
       ),
-      h('form',{onSubmit:submitMeasurement, style:{background:'linear-gradient(145deg, var(--surface), #0c121c)',border:'1px solid var(--line)',borderRadius:22,boxShadow:'var(--shadow)',padding:18,marginTop:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+      h('form',{onSubmit:submitMeasurement, style:{background:'linear-gradient(145deg, var(--surface), var(--panel-end))',border:'1px solid var(--line)',borderRadius:22,boxShadow:'var(--shadow)',padding:18,marginTop:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
         ['weight','fat','waist','neck','chest','arm','thigh','hip'].map(f=>{
           const labels = {weight:'الوزن',fat:'نسبة الدهون',waist:'محيط الخصر',neck:'محيط الرقبة',chest:'محيط الصدر',arm:'محيط الذراع (باي)',thigh:'محيط الفخذ',hip:'محيط الأرداف'};
           return h('label',{key:f, style:{fontSize:12,color:'var(--muted)'}}, labels[f],
@@ -202,7 +202,7 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
           const d=i+1; const dt=new Date(calYear,calMonth,d); const k=AF.dateKey(dt); const trained=trainedDays[k];
           return h('div',{key:d, onClick:()=>setCalInfo(trained?`تمرين: ${trained.join('، ')}`:'لا يوجد تمرين هذا اليوم'), style:{
             position:'relative',aspectRatio:'1',display:'grid',placeItems:'center',borderRadius:10,
-            background:trained?'rgba(91,140,255,.18)':'var(--surface2)', color:trained?'var(--accent2)':'var(--text)',
+            background:trained?'rgba(var(--accent-rgb),.15)':'var(--surface2)', color:trained?'var(--accent2)':'var(--text)',
             fontWeight:trained?800:400, fontSize:13, border:k===todayKey?'1px solid var(--gold)':'1px solid transparent', cursor:'pointer'
           }}, d);
         })

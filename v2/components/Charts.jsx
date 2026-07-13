@@ -72,9 +72,9 @@ AF.RingChart = function({percent, size, label, sub, color}){
   size = size || 88; color = color || 'var(--accent)';
   return React.createElement('div',{style:{
     '--p':percent, width:size, height:size, borderRadius:'50%', display:'grid', placeItems:'center',
-    background:`conic-gradient(${color} calc(var(--p)*1%), #1c2740 0)`, position:'relative', flex:'0 0 auto'
+    background:`conic-gradient(${color} calc(var(--p)*1%), var(--ring-track) 0)`, position:'relative', flex:'0 0 auto'
   }},
-    React.createElement('div',{style:{position:'absolute',inset:size*0.09,borderRadius:'50%',background:'#0b111c'}}),
+    React.createElement('div',{style:{position:'absolute',inset:size*0.09,borderRadius:'50%',background:'var(--bg)'}}),
     React.createElement('div',{style:{position:'relative',zIndex:1,textAlign:'center'}},
       React.createElement('span',{style:{display:'block',fontWeight:900,fontSize:size>90?18:15}},label),
       sub?React.createElement('small',{style:{display:'block',color:'var(--muted)',fontSize:10}},sub):null

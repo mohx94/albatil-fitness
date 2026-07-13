@@ -30,7 +30,7 @@ AF.WorkoutsPage = function({cur, getWorkouts, openWorkout, showScreen, advancePr
           textAlign:'right',cursor:'pointer',width:'100%'
         }},
           h('div',null, h('h3',{style:{margin:'0 0 4px'}}, w.name), h('p',{style:{margin:0,color:'var(--muted)',fontSize:13}}, `${w.subtitle} · ${exCount} تمارين`)),
-          h('div',{style:{width:52,height:52,borderRadius:16,background:'rgba(40,224,184,.12)',color:'var(--accent)',display:'grid',placeItems:'center',fontWeight:900}}, i+1)
+          h('div',{style:{width:52,height:52,borderRadius:16,background:'rgba(var(--accent-rgb),.1)',color:'var(--accent)',display:'grid',placeItems:'center',fontWeight:900}}, i+1)
         );
       })
     )

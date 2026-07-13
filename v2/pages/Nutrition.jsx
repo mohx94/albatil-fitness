@@ -7,8 +7,10 @@ AF.NutritionPage = function({cur, mutate, toast}){
   const [qty, setQty] = React.useState(100);
   const [barcode, setBarcode] = React.useState('');
   const [scanning, setScanning] = React.useState(false);
+  const [scanStatus, setScanStatus] = React.useState('');
   const videoRef = React.useRef(null);
   const streamRef = React.useRef(null);
+  const rafRef = React.useRef(null);
   const [newFood, setNewFood] = React.useState({name:'',barcode:'',cal:'',protein:'',carb:'',fat:''});
 
   const allFoods = () => AF.FOODS.concat(c.nutrition.customFoods);
@@ -27,36 +29,64 @@ AF.NutritionPage = function({cur, mutate, toast}){
     if(match){ setFoodId(match.id); toast('تم العثور على الصنف ✅'); }
   },[barcode]);
 
-  const toggleScan = async ()=>{
-    if(!('BarcodeDetector' in window)){ toast('المسح بالكاميرا غير مدعوم بهذا المتصفح'); return; }
-    if(scanning){
-      streamRef.current?.getTracks().forEach(tr=>tr.stop());
-      streamRef.current=null; setScanning(false);
-      return;
-    }
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-      streamRef.current = stream;
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
-      setScanning(true);
-      const detector = new BarcodeDetector();
-      const loop = async ()=>{
-        if(!streamRef.current) return;
-        try{
-          const codes = await detector.detect(videoRef.current);
-          if(codes.length){
-            setBarcode(codes[0].rawValue);
-            toast('📷 تم قراءة الباركود: '+codes[0].rawValue);
-            streamRef.current.getTracks().forEach(tr=>tr.stop());
-            streamRef.current=null; setScanning(false);
-            return;
+  const stopScan = ()=>{
+    cancelAnimationFrame(rafRef.current);
+    streamRef.current?.getTracks().forEach(tr=>tr.stop());
+    streamRef.current = null;
+    setScanning(false);
+    setScanStatus('');
+  };
+
+  React.useEffect(()=>{
+    if(!scanning) return;
+    let cancelled = false;
+    (async ()=>{
+      if(!('BarcodeDetector' in window)){
+        setScanStatus('❌ المسح بالكاميرا غير مدعوم على هذا المتصفح (يعمل على Chrome لأندرويد فقط)');
+        setScanning(false);
+        return;
+      }
+      try{
+        setScanStatus('📷 جارٍ تشغيل الكاميرا...');
+        const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+        if(cancelled){ stream.getTracks().forEach(tr=>tr.stop()); return; }
+        streamRef.current = stream;
+        const video = videoRef.current;
+        video.srcObject = stream;
+        await video.play();
+        let detector;
+        try{ detector = new BarcodeDetector(); }
+        catch{ setScanStatus('❌ تعذر تشغيل قارئ الباركود'); stopScan(); return; }
+        setScanStatus('🔍 جارٍ البحث عن الباركود... وجّه الكاميرا للباركود');
+        const loop = async ()=>{
+          if(cancelled || !streamRef.current) return;
+          if(video.readyState>=2){
+            try{
+              const codes = await detector.detect(video);
+              if(codes.length){
+                setBarcode(codes[0].rawValue);
+                toast('📷 تم قراءة الباركود: '+codes[0].rawValue);
+                stopScan();
+                return;
+              }
+            }catch{}
           }
-        }catch{}
-        requestAnimationFrame(loop);
-      };
-      loop();
-    }catch{ toast('تعذر الوصول للكاميرا'); }
+          rafRef.current = requestAnimationFrame(loop);
+        };
+        loop();
+      }catch(e){
+        setScanStatus('❌ تعذر الوصول للكاميرا — تأكد إنك سمحت بالإذن من إعدادات المتصفح');
+        setScanning(false);
+      }
+    })();
+    return ()=>{ cancelled = true; };
+  },[scanning]);
+
+  React.useEffect(()=>()=>{ cancelAnimationFrame(rafRef.current); streamRef.current?.getTracks().forEach(tr=>tr.stop()); },[]);
+
+  const toggleScan = ()=>{
+    if(scanning){ stopScan(); return; }
+    setScanning(true);
   };
 
   const addMeal = ()=>{
@@ -151,7 +181,8 @@ AF.NutritionPage = function({cur, mutate, toast}){
         h('label',{style:{fontSize:12,color:'var(--muted)'}},'الكمية (جم)',
           h('input',{type:'number', value:qty, min:1, onChange:e=>setQty(e.target.value), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
       ),
-      h('video',{ref:videoRef, muted:true, playsInline:true, style:{display:scanning?'block':'none',width:'100%',borderRadius:14,marginTop:10}}),
+      h('video',{ref:videoRef, muted:true, playsInline:true, autoPlay:true, style:{display:scanning?'block':'none',width:'100%',borderRadius:14,marginTop:10,background:'#000'}}),
+      scanStatus ? h('div',{style:{fontSize:12,color:'var(--muted)',marginTop:6}}, scanStatus) : null,
       h(AF.PrimaryBtn,{onClick:addMeal, style:{width:'100%',marginTop:10}}, '+ إضافة للسجل')
     ),
 

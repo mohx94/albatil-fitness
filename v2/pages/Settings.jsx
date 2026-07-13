@@ -159,7 +159,7 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
       h(AF.SecondaryBtn,{onClick:addProfile, style:{width:'100%',marginTop:12}}, '+ ملف شخصي جديد')
     ),
 
-    h('form',{onSubmit:saveSettings, style:{background:'linear-gradient(145deg, var(--surface), #0c121c)',border:'1px solid var(--line)',borderRadius:22,boxShadow:'var(--shadow)',padding:18,marginTop:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+    h('form',{onSubmit:saveSettings, style:{background:'linear-gradient(145deg, var(--surface), var(--panel-end))',border:'1px solid var(--line)',borderRadius:22,boxShadow:'var(--shadow)',padding:18,marginTop:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
       h('label',{style:{fontSize:12,color:'var(--muted)'}},'اسمك', h('input',{value:settingsForm.name, onChange:e=>setSettingsForm(f=>({...f,name:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
       h('label',{style:{fontSize:12,color:'var(--muted)'}},'الوزن الحالي', h('input',{type:'number', step:'0.1', value:settingsForm.weight, onChange:e=>setSettingsForm(f=>({...f,weight:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
       h('label',{style:{fontSize:12,color:'var(--muted)'}},'وزن الهدف', h('input',{type:'number', step:'0.1', value:settingsForm.goal, onChange:e=>setSettingsForm(f=>({...f,goal:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
