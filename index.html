@@ -121,14 +121,30 @@ button{cursor:pointer}
 
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-grid label{font-size:12px;color:var(--muted)}
-.form-grid input{width:100%;margin-top:6px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px}
+.form-grid input,.form-grid select{width:100%;margin-top:6px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px}
 .form-grid button{grid-column:1/-1}
 .history-list{display:grid;gap:8px;margin-top:12px}
 .history-item{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:12px}
 .history-item small{color:var(--muted)}
 .backup-actions{display:flex;gap:10px}
 .file-label{display:inline-flex;align-items:center}
-.bottom-nav{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:min(calc(100% - 20px),700px);display:grid;grid-template-columns:repeat(4,1fr);background:rgba(19,22,27,.94);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;padding:7px;z-index:20}
+.bottom-nav{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:min(calc(100% - 20px),700px);display:grid;grid-template-columns:repeat(5,1fr);background:rgba(19,22,27,.94);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;padding:7px;z-index:20}
+.nutri-summary{display:flex;align-items:center;gap:18px}
+.cal-ring{--p:0;width:96px;height:96px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),#1b2745 0);position:relative}
+.cal-ring:after{content:"";position:absolute;inset:9px;border-radius:50%;background:#0c1425}
+.cal-ring span,.cal-ring small{position:relative;z-index:1;text-align:center}
+.cal-ring span{display:block;font-weight:900;font-size:18px}
+.cal-ring small{display:block;color:var(--muted);font-size:10px}
+.macro-bars{flex:1;display:grid;gap:10px}
+.macro-row{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center}
+.macro-row span{color:var(--muted);font-size:12px}
+.macro-row b{font-size:11px;color:var(--text);white-space:nowrap}
+.macro-track{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.macro-fill{height:100%;border-radius:99px;width:0%;transition:width .4s ease}
+.macro-fill.protein{background:var(--accent2)}
+.macro-fill.carb{background:var(--gold)}
+.macro-fill.fat{background:var(--danger)}
+.exercise-select,#foodSelect{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
 .nav-btn{border:0;background:transparent;color:var(--muted);border-radius:14px;padding:8px;display:grid;gap:2px;place-items:center}
 .nav-btn.active{background:rgba(255,90,54,.13);color:var(--accent)}
 .nav-btn span{font-size:18px}
@@ -260,6 +276,50 @@ button{cursor:pointer}
       </div>
     </section>
 
+    <section class="screen" data-screen="nutrition">
+      <div class="section-heading"><p class="muted">تابع أكلك اليومي</p><h2>التغذية</h2></div>
+      <div class="cal-head">
+        <button class="ghost-btn" id="nutriPrev">‹</button>
+        <h3 id="nutriDateLabel">اليوم</h3>
+        <button class="ghost-btn" id="nutriNext">›</button>
+      </div>
+
+      <section class="panel nutri-summary">
+        <div class="cal-ring" id="calRing"><span id="calRingText">0</span><small>سعرة</small></div>
+        <div class="macro-bars">
+          <div class="macro-row"><span>بروتين</span><div class="macro-track"><div class="macro-fill protein" id="proteinBar"></div></div><b id="proteinVal">0 / 0 جم</b></div>
+          <div class="macro-row"><span>كارب</span><div class="macro-track"><div class="macro-fill carb" id="carbBar"></div></div><b id="carbVal">0 / 0 جم</b></div>
+          <div class="macro-row"><span>دهون</span><div class="macro-track"><div class="macro-fill fat" id="fatBar"></div></div><b id="fatVal">0 / 0 جم</b></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title"><h3>إضافة وجبة</h3></div>
+        <div class="form-grid">
+          <label>الصنف<select id="foodSelect"></select></label>
+          <label>الكمية (جم)<input id="foodQty" type="number" value="100" min="1"></label>
+        </div>
+        <button class="primary-btn" id="addMealBtn" style="width:100%;margin-top:10px">+ إضافة للسجل</button>
+      </section>
+
+      <section class="panel">
+        <div class="section-title"><h3>سجل اليوم</h3><span id="mealCount">0 وجبات</span></div>
+        <div id="mealList" class="history-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title"><h3>إضافة صنف جديد لقاعدة البيانات</h3></div>
+        <div class="form-grid">
+          <label>الاسم<input id="newFoodName" type="text"></label>
+          <label>سعرات/100جم<input id="newFoodCal" type="number"></label>
+          <label>بروتين/100جم<input id="newFoodProtein" type="number" step="0.1"></label>
+          <label>كارب/100جم<input id="newFoodCarb" type="number" step="0.1"></label>
+          <label>دهون/100جم<input id="newFoodFat" type="number" step="0.1"></label>
+        </div>
+        <button class="secondary-btn" id="addFoodBtn" style="width:100%;margin-top:10px">حفظ الصنف</button>
+      </section>
+    </section>
+
     <section class="screen" data-screen="settings">
       <div class="section-heading"><p class="muted">بياناتك داخل جهازك فقط</p><h2>الإعدادات</h2></div>
       <form class="panel form-grid" id="settingsForm">
@@ -269,6 +329,16 @@ button{cursor:pointer}
         <label>نسبة الدهون<input id="settingsFat" type="number" step="0.1"></label>
         <button class="primary-btn" type="submit">حفظ الإعدادات</button>
       </form>
+      <section class="panel">
+        <div class="section-title"><h3>أهداف التغذية اليومية</h3></div>
+        <form class="form-grid" id="nutritionTargetsForm">
+          <label>السعرات<input id="targetCalories" type="number"></label>
+          <label>بروتين (جم)<input id="targetProtein" type="number"></label>
+          <label>كارب (جم)<input id="targetCarb" type="number"></label>
+          <label>دهون (جم)<input id="targetFat" type="number"></label>
+          <button class="primary-btn" type="submit">حفظ الأهداف</button>
+        </form>
+      </section>
       <section class="panel">
         <div class="section-title"><h3>النسخة الاحتياطية</h3></div>
         <div class="backup-actions">
@@ -282,6 +352,7 @@ button{cursor:pointer}
   <nav class="bottom-nav">
     <button class="nav-btn active" data-target="home"><span>⌂</span><small>الرئيسية</small></button>
     <button class="nav-btn" data-target="workouts"><span>🏋</span><small>التمارين</small></button>
+    <button class="nav-btn" data-target="nutrition"><span>🍗</span><small>التغذية</small></button>
     <button class="nav-btn" data-target="progress"><span>↗</span><small>التقدم</small></button>
     <button class="nav-btn" data-target="settings"><span>⚙</span><small>الإعدادات</small></button>
   </nav>
@@ -289,10 +360,41 @@ button{cursor:pointer}
 <div class="toast" id="toast"></div>
 
 <script>
+const FOODS=[
+  {id:"rice_white",name:"أرز أبيض مطبوخ",cal:130,protein:2.7,carb:28,fat:0.3},
+  {id:"rice_brown",name:"أرز بني مطبوخ",cal:112,protein:2.6,carb:24,fat:0.9},
+  {id:"chicken_breast",name:"صدر دجاج مشوي",cal:165,protein:31,carb:0,fat:3.6},
+  {id:"chicken_thigh",name:"فخذ دجاج مشوي",cal:209,protein:26,carb:0,fat:10.9},
+  {id:"egg",name:"بيضة مسلوقة",cal:155,protein:13,carb:1.1,fat:11},
+  {id:"dates",name:"تمر",cal:277,protein:1.8,carb:75,fat:0.2},
+  {id:"laban",name:"لبن رائب",cal:61,protein:3.5,carb:4.7,fat:3.3},
+  {id:"pita_bread",name:"خبز عربي",cal:275,protein:9,carb:55,fat:1.5},
+  {id:"hummus",name:"حمص",cal:166,protein:8,carb:14,fat:9.6},
+  {id:"olive_oil",name:"زيت زيتون",cal:884,protein:0,carb:0,fat:100},
+  {id:"banana",name:"موز",cal:89,protein:1.1,carb:23,fat:0.3},
+  {id:"apple",name:"تفاح",cal:52,protein:0.3,carb:14,fat:0.2},
+  {id:"oats",name:"شوفان جاف",cal:389,protein:17,carb:66,fat:7},
+  {id:"milk",name:"حليب كامل الدسم",cal:61,protein:3.2,carb:4.8,fat:3.3},
+  {id:"cheese_white",name:"جبنة بيضاء",cal:264,protein:18,carb:3.4,fat:21},
+  {id:"tuna",name:"تونة (معلبة بالماء)",cal:116,protein:26,carb:0,fat:0.8},
+  {id:"salmon",name:"سلمون مشوي",cal:208,protein:20,carb:0,fat:13},
+  {id:"potato",name:"بطاطس مسلوقة",cal:87,protein:1.9,carb:20,fat:0.1},
+  {id:"sweet_potato",name:"بطاطا حلوة مسلوقة",cal:86,protein:1.6,carb:20,fat:0.1},
+  {id:"broccoli",name:"بروكلي مطبوخ",cal:35,protein:2.4,carb:7.2,fat:0.4},
+  {id:"mixed_nuts",name:"مكسرات مشكلة",cal:607,protein:20,carb:21,fat:54},
+  {id:"honey",name:"عسل",cal:304,protein:0.3,carb:82,fat:0},
+  {id:"greek_yogurt",name:"زبادي يوناني",cal:59,protein:10,carb:3.6,fat:0.4},
+  {id:"beef",name:"لحم بقر مشوي",cal:250,protein:26,carb:0,fat:17},
+  {id:"lentil_soup",name:"شوربة عدس",cal:93,protein:6.3,carb:14,fat:1.5},
+  {id:"falafel",name:"فلافل",cal:333,protein:13,carb:32,fat:18},
+  {id:"shawarma_chicken",name:"شاورما دجاج",cal:220,protein:18,carb:15,fat:10}
+];
+
 const WORKOUTS=[{id:"pull",name:"PULL",subtitle:"ظهر + باي + سواعد",groups:[["الظهر",[["عقلة بمساعدة",4,"6-10"],["سحب علوي",3,"8-10"],["سحب أرضي",3,"8-10"],["سحب ذراع مستقيمة",3,"12-15"]]],["الكتف الخلفي",[["Face Pull",3,"12-15"]]],["الباي",[["EZ Bar Curl",3,"8-10"],["Incline Dumbbell Curl",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]},{id:"push",name:"PUSH",subtitle:"صدر + كتف + تراي",groups:[["الصدر",[["Bench Press",3,"6-8"],["Incline Dumbbell Press",3,"8-10"],["Cable Fly",2,"12-15"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Shoulder Press",3,"8-10"]]],["التراي",[["Rope Pushdown",4,"10-12"],["Overhead Cable Extension",3,"10-12"]]]]},{id:"legs",name:"LEGS",subtitle:"أرجل + كتف",groups:[["الأرجل",[["Squat",4,"6-8"],["Romanian Deadlift",3,"8-10"],["Leg Press",3,"10-12"],["Leg Curl",3,"10-12"],["Leg Extension",3,"12-15"],["Standing Calf Raise",4,"15-20"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Rear Delt Machine",3,"12-15"]]]]},{id:"optional",name:"اختياري",subtitle:"ظهر + ذراع + سواعد",groups:[["الظهر",[["Chest Supported Row",3,"8-12"],["Single Arm Lat Pulldown",3,"10-12"],["Straight Arm Pulldown",3,"12-15"]]],["الذراع",[["Hammer Curl",3,"10-12"],["Cable Curl",3,"10-12"],["Pushdown",3,"10-12"],["Overhead Extension",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]}];
 
-const KEY="albatil-fitness-v1",DEFAULT={profile:{name:"محمد",weight:80.5,goal:75,fat:27.2},history:[],measurements:[],prs:{},draft:null,exerciseLogs:{}};
+const KEY="albatil-fitness-v1",DEFAULT={profile:{name:"محمد",weight:80.5,goal:75,fat:27.2},history:[],measurements:[],prs:{},draft:null,exerciseLogs:{},nutrition:{logs:[],customFoods:[],targets:{calories:2200,protein:150,carb:220,fat:70}}};
 let calMonth=new Date().getMonth(),calYear=new Date().getFullYear();
+let nutriDate=new Date();
 let state=load(),currentWorkout=null,restDuration=90,timer=restDuration,timerId=null,deferredPrompt=null,autosaveId=null;
 const RING_R=42,RING_C=2*Math.PI*RING_R;
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -301,7 +403,7 @@ function load(){try{return {...DEFAULT,...JSON.parse(localStorage.getItem(KEY)||
 function save(){localStorage.setItem(KEY,JSON.stringify(state));refreshDashboard()}
 function toast(m,cls){const t=$("#toast");t.textContent=m;t.className="toast show"+(cls?" "+cls:"");setTimeout(()=>t.classList.remove("show"),1900)}
 function showScreen(n){$$('.screen').forEach(x=>x.classList.toggle('active',x.dataset.screen===n));$$('.nav-btn').forEach(x=>x.classList.toggle('active',x.dataset.target===n));scrollTo({top:0,behavior:'smooth'})}
-$$('.nav-btn').forEach(b=>b.onclick=()=>{showScreen(b.dataset.target);if(b.dataset.target==='progress')refreshProgressTabs()});
+$$('.nav-btn').forEach(b=>b.onclick=()=>{showScreen(b.dataset.target);if(b.dataset.target==='progress')refreshProgressTabs();if(b.dataset.target==='nutrition')renderNutritionDay()});
 $$('.tab-btn').forEach(b=>b.onclick=()=>{
   $$('.tab-btn').forEach(x=>x.classList.toggle('active',x===b));
   $$('.progress-tab').forEach(x=>x.classList.toggle('active',x.id===b.dataset.tab));
@@ -640,6 +742,84 @@ function renderCalendar(){
 $('#calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}renderCalendar()};
 $('#calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}renderCalendar()};
 
+function allFoods(){return FOODS.concat(state.nutrition.customFoods)}
+function findFood(id){return allFoods().find(f=>f.id===id)}
+
+function populateFoodSelect(){
+  const sel=$('#foodSelect');
+  const prev=sel.value;
+  sel.innerHTML=allFoods().map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  if(prev)sel.value=prev;
+}
+
+$('#addMealBtn').onclick=()=>{
+  const foodId=$('#foodSelect').value,qty=+$('#foodQty').value||0;
+  const food=findFood(foodId);
+  if(!food||!qty){toast('اختر صنف وأدخل الكمية');return}
+  const ratio=qty/100;
+  state.nutrition.logs.push({
+    date:dateKey(nutriDate),foodId,name:food.name,qty,
+    cal:Math.round(food.cal*ratio),protein:+(food.protein*ratio).toFixed(1),
+    carb:+(food.carb*ratio).toFixed(1),fat:+(food.fat*ratio).toFixed(1)
+  });
+  save();renderNutritionDay();toast('تمت إضافة الوجبة 🍽️');
+};
+
+$('#addFoodBtn').onclick=()=>{
+  const name=$('#newFoodName').value.trim();
+  const cal=+$('#newFoodCal').value||0,protein=+$('#newFoodProtein').value||0,carb=+$('#newFoodCarb').value||0,fat=+$('#newFoodFat').value||0;
+  if(!name||!cal){toast('أدخل الاسم والسعرات على الأقل');return}
+  const id='custom_'+Date.now();
+  state.nutrition.customFoods.push({id,name,cal,protein,carb,fat});
+  save();populateFoodSelect();$('#foodSelect').value=id;
+  $('#newFoodName').value='';$('#newFoodCal').value='';$('#newFoodProtein').value='';$('#newFoodCarb').value='';$('#newFoodFat').value='';
+  toast('تم حفظ الصنف الجديد ✅');
+};
+
+function renderNutritionDay(){
+  populateFoodSelect();
+  const k=dateKey(nutriDate);
+  const today=dateKey(new Date());
+  $('#nutriDateLabel').textContent = k===today ? 'اليوم' : nutriDate.toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'numeric'});
+  const dayLogs=state.nutrition.logs.filter(l=>l.date===k);
+  const totals=dayLogs.reduce((a,l)=>({cal:a.cal+l.cal,protein:a.protein+l.protein,carb:a.carb+l.carb,fat:a.fat+l.fat}),{cal:0,protein:0,carb:0,fat:0});
+  const t=state.nutrition.targets;
+  const calPct=Math.min(100,Math.round(totals.cal/Math.max(1,t.calories)*100));
+  $('#calRing').style.setProperty('--p',calPct);
+  $('#calRingText').textContent=Math.round(totals.cal);
+  $('#proteinBar').style.width=Math.min(100,Math.round(totals.protein/Math.max(1,t.protein)*100))+'%';
+  $('#carbBar').style.width=Math.min(100,Math.round(totals.carb/Math.max(1,t.carb)*100))+'%';
+  $('#fatBar').style.width=Math.min(100,Math.round(totals.fat/Math.max(1,t.fat)*100))+'%';
+  $('#proteinVal').textContent=`${Math.round(totals.protein)} / ${t.protein} جم`;
+  $('#carbVal').textContent=`${Math.round(totals.carb)} / ${t.carb} جم`;
+  $('#fatVal').textContent=`${Math.round(totals.fat)} / ${t.fat} جم`;
+  $('#mealCount').textContent=dayLogs.length+' وجبات';
+  $('#mealList').innerHTML=dayLogs.map((l,i)=>`<div class="history-item"><div><b>${l.name}</b><br><small>${l.qty} جم · ${l.cal} سعرة</small></div><button class="ghost-btn" data-i="${i}" data-del>حذف</button></div>`).join('')||'<div class="history-item"><small>لا توجد وجبات مسجلة اليوم</small></div>';
+  $$('#mealList [data-del]').forEach(btn=>btn.onclick=()=>{
+    const idxInDay=+btn.dataset.i;
+    const target=dayLogs[idxInDay];
+    const globalIdx=state.nutrition.logs.indexOf(target);
+    if(globalIdx>-1){state.nutrition.logs.splice(globalIdx,1);save();renderNutritionDay()}
+  });
+}
+$('#nutriPrev').onclick=()=>{nutriDate.setDate(nutriDate.getDate()-1);renderNutritionDay()};
+$('#nutriNext').onclick=()=>{nutriDate.setDate(nutriDate.getDate()+1);renderNutritionDay()};
+
+function fillNutritionTargets(){
+  const t=state.nutrition.targets;
+  $('#targetCalories').value=t.calories;$('#targetProtein').value=t.protein;$('#targetCarb').value=t.carb;$('#targetFat').value=t.fat;
+}
+$('#nutritionTargetsForm').onsubmit=e=>{
+  e.preventDefault();
+  state.nutrition.targets={
+    calories:+$('#targetCalories').value||2200,
+    protein:+$('#targetProtein').value||150,
+    carb:+$('#targetCarb').value||220,
+    fat:+$('#targetFat').value||70
+  };
+  save();renderNutritionDay();toast('تم حفظ أهداف التغذية');
+};
+
 function fillSettings(){
   const p=state.profile;
   $('#nameInput').value=p.name;$('#settingsWeight').value=p.weight;$('#settingsGoal').value=p.goal;$('#settingsFat').value=p.fat;
@@ -663,7 +843,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPro
 $('#installBtn').onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$('#installBtn').hidden=true}};
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 
-renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();renderWeightChart();populateExerciseSelect();renderStrengthChart();renderCalendar();
+renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();renderWeightChart();populateExerciseSelect();renderStrengthChart();renderCalendar();fillNutritionTargets();renderNutritionDay();
 </script>
 </body>
 </html>
