@@ -62,7 +62,9 @@ a:hover{color:var(--accent)}
 .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
 .stat-card span,.stat-card small{color:var(--muted);display:block}
 .stat-card strong{font-size:28px}
-.primary-btn,.secondary-btn,.ghost-btn,.danger-lite{border:0;border-radius:14px;padding:13px 16px;font-weight:800}
+.primary-btn,.secondary-btn,.ghost-btn,.danger-lite{border:0;border-radius:14px;padding:13px 16px;font-weight:800;transition:transform .15s ease,box-shadow .15s ease,opacity .15s ease}
+.primary-btn:active,.secondary-btn:active,.ghost-btn:active,.danger-lite:active,.quick-meal-chip:active,.day-card:active,.tab-btn:active,.nav-btn:active{transform:scale(.96)}
+.primary-btn:hover{box-shadow:0 8px 24px rgba(40,224,184,.28)}
 .primary-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04140f}
 .secondary-btn{background:var(--surface2);color:var(--text);border:1px solid var(--line)}
 .ghost-btn{background:transparent;color:var(--muted);border:1px solid var(--line)}
@@ -79,7 +81,8 @@ a:hover{color:var(--accent)}
 .summary-row span{font-size:11px;color:var(--muted)}
 .section-heading{align-items:flex-end;margin:14px 0 18px}
 .day-list{display:grid;gap:12px}
-.day-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--text);text-align:right}
+.day-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--text);text-align:right;transition:transform .15s ease,border-color .15s ease}
+.day-card:hover{border-color:var(--accent2)}
 .day-card h3{margin:0 0 4px}
 .day-card p{margin:0;color:var(--muted);font-size:13px}
 .day-badge{width:52px;height:52px;border-radius:16px;background:rgba(40,224,184,.12);color:var(--accent);display:grid;place-items:center;font-weight:900}
@@ -111,7 +114,8 @@ a:hover{color:var(--accent)}
 .progress-track{height:10px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-bottom:16px}
 .progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .4s ease}
 
-.exercise-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;transition:box-shadow .4s,transform .2s}
+.exercise-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;transition:box-shadow .4s,transform .2s;animation:cardIn .35s ease both}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .exercise-card.pr-flash{box-shadow:0 0 0 2px var(--gold),0 0 30px rgba(244,196,105,.35)}
 .exercise-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:6px}
 .exercise-head h3{margin:0}
@@ -161,7 +165,10 @@ a:hover{color:var(--accent)}
 .macro-fill.fat{background:var(--danger)}
 .exercise-select,#foodSelect{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
 .quick-meals{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-.quick-meal-chip{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:9px 14px;font-size:13px;font-weight:700}
+.quick-meal-chip{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:9px 14px;font-size:13px;font-weight:700;transition:transform .15s ease,border-color .15s ease}
+.quick-meal-chip:hover{border-color:var(--accent2)}
+.set-check{height:40px;border-radius:11px;border:1px solid var(--line);background:#1a2131;color:#fff;transition:background .2s ease,transform .15s ease}
+.set-check:active{transform:scale(.9)}
 .nav-btn{border:0;background:transparent;color:var(--muted);border-radius:14px;padding:8px;display:grid;gap:2px;place-items:center}
 .nav-btn.active{background:rgba(40,224,184,.13);color:var(--accent)}
 .nav-btn span{font-size:18px}
@@ -227,6 +234,10 @@ a:hover{color:var(--accent)}
       <div class="link-row">
         <button class="secondary-btn" id="openLibraryBtn" style="flex:1">📚 مكتبة التمارين</button>
       </div>
+      <section class="panel" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div><div class="section-title"><h3 style="font-size:14px">🗓️ دورة التدريج التلقائي</h3></div><span class="muted" id="programWeekLabel" style="font-size:13px">أسبوع 1 من 4</span></div>
+        <button class="secondary-btn" id="advanceWeekBtn">الأسبوع الجاي ›</button>
+      </section>
       <div id="workoutDays" class="day-list"></div>
     </section>
 
@@ -283,7 +294,7 @@ a:hover{color:var(--accent)}
       </div>
 
       <div class="progress-tab active" id="weightTab">
-        <section class="panel"><div id="weightChart" class="chart-wrap"></div></section>
+        <section class="panel"><div id="weightChart" class="chart-wrap"></div><div class="sync-note" id="weightForecast" style="margin-top:12px"></div></section>
         <form class="panel form-grid" id="bodyForm">
           <label>الوزن<input id="weightInput" type="number" step="0.1" required></label>
           <label>نسبة الدهون<input id="fatInput" type="number" step="0.1"></label>
@@ -341,6 +352,10 @@ a:hover{color:var(--accent)}
             <div><b id="monthStreak">0</b><span>أفضل التزام</span></div>
           </div>
         </section>
+        <section class="panel">
+          <div class="section-title"><h3>مقارنة الأشهر</h3></div>
+          <div id="monthCompare" class="bars-chart"></div>
+        </section>
       </div>
     </section>
 
@@ -370,9 +385,11 @@ a:hover{color:var(--accent)}
         <div class="section-title"><h3>إضافة وجبة</h3></div>
         <div class="form-grid">
           <label>بحث بالباركود (تجريبي)<input id="barcodeInput" type="text" placeholder="ادخل رقم الباركود المحفوظ"></label>
+          <label style="align-self:end"><button type="button" class="secondary-btn" id="scanBarcodeBtn" style="width:100%;margin-top:6px">📷 مسح بالكاميرا</button></label>
           <label>الصنف<select id="foodSelect"></select></label>
           <label>الكمية (جم)<input id="foodQty" type="number" value="100" min="1"></label>
         </div>
+        <video id="scanVideo" style="display:none;width:100%;border-radius:14px;margin-top:10px" muted playsinline></video>
         <button class="primary-btn" id="addMealBtn" style="width:100%;margin-top:10px">+ إضافة للسجل</button>
       </section>
 
@@ -434,6 +451,16 @@ a:hover{color:var(--accent)}
       </section>
 
       <section class="panel">
+        <div class="section-title"><h3>المزامنة السحابية</h3><span id="cloudSyncStatus">غير متصل</span></div>
+        <button class="secondary-btn" id="cloudSignInBtn" style="width:100%;margin-bottom:10px">تسجيل الدخول بجوجل</button>
+        <div class="backup-actions">
+          <button class="secondary-btn" id="cloudPushBtn" hidden>⬆️ رفع بياناتي للسحابة</button>
+          <button class="secondary-btn" id="cloudPullBtn" hidden>⬇️ سحب بياناتي من السحابة</button>
+        </div>
+        <div class="sync-note">لتفعيل هذه الخاصية أنشئ مشروع Firebase مجاني وانسخ مفاتيحه بملف firebase-config.js — التفاصيل بملف README.</div>
+      </section>
+
+      <section class="panel">
         <div class="section-title"><h3>النسخة الاحتياطية</h3></div>
         <div class="backup-actions">
           <button class="secondary-btn" id="exportBtn">تصدير البيانات</button>
@@ -485,7 +512,35 @@ const FOODS=[
   {id:"shawarma_chicken",name:"شاورما دجاج",cal:220,protein:18,carb:15,fat:10},
   {id:"protein_shake",name:"مسحوق بروتين (سكوب)",cal:120,protein:24,carb:3,fat:1.5},
   {id:"avocado",name:"أفوكادو",cal:160,protein:2,carb:8.5,fat:14.7},
-  {id:"quinoa",name:"كينوا مطبوخة",cal:120,protein:4.4,carb:21,fat:1.9}
+  {id:"quinoa",name:"كينوا مطبوخة",cal:120,protein:4.4,carb:21,fat:1.9},
+  {id:"kabsa_chicken",name:"كبسة دجاج",cal:190,protein:11,carb:22,fat:6.5},
+  {id:"mandi_lamb",name:"مندي لحم",cal:230,protein:16,carb:18,fat:10},
+  {id:"mutabbaq",name:"مطبق",cal:310,protein:9,carb:34,fat:15},
+  {id:"foul",name:"فول مدمس",cal:110,protein:7,carb:17,fat:1.5},
+  {id:"shakshuka",name:"شكشوكة",cal:130,protein:7,carb:6,fat:9},
+  {id:"kunafa",name:"كنافة",cal:340,protein:6,carb:40,fat:17},
+  {id:"baklava",name:"بقلاوة",cal:430,protein:6,carb:48,fat:24},
+  {id:"samosa",name:"سمبوسة لحم",cal:260,protein:8,carb:24,fat:15},
+  {id:"grilled_fish",name:"سمك مشوي (هامور)",cal:140,protein:24,carb:0,fat:4.5},
+  {id:"shrimp",name:"روبيان مطبوخ",cal:99,protein:24,carb:0.2,fat:0.3},
+  {id:"turkey_breast",name:"صدر ديك رومي مشوي",cal:135,protein:30,carb:0,fat:1},
+  {id:"labneh",name:"لبنة",cal:290,protein:11,carb:5,fat:26},
+  {id:"cottage_cheese",name:"جبنة قريش",cal:98,protein:11,carb:3.4,fat:4.3},
+  {id:"cheddar",name:"جبنة شيدر",cal:403,protein:23,carb:1.3,fat:33},
+  {id:"whole_wheat_bread",name:"خبز أسمر",cal:247,protein:13,carb:41,fat:3.4},
+  {id:"pasta_cooked",name:"معكرونة مسلوقة",cal:158,protein:5.8,carb:31,fat:0.9},
+  {id:"corn",name:"ذرة مسلوقة",cal:96,protein:3.4,carb:21,fat:1.5},
+  {id:"cucumber",name:"خيار",cal:15,protein:0.7,carb:3.6,fat:0.1},
+  {id:"tomato",name:"طماطم",cal:18,protein:0.9,carb:3.9,fat:0.2},
+  {id:"orange",name:"برتقال",cal:47,protein:0.9,carb:12,fat:0.1},
+  {id:"watermelon",name:"بطيخ",cal:30,protein:0.6,carb:7.6,fat:0.2},
+  {id:"grapes",name:"عنب",cal:69,protein:0.7,carb:18,fat:0.2},
+  {id:"almonds",name:"لوز",cal:579,protein:21,carb:22,fat:50},
+  {id:"peanut_butter",name:"زبدة فول سوداني",cal:588,protein:25,carb:20,fat:50},
+  {id:"dark_chocolate",name:"شوكولاتة داكنة",cal:546,protein:7.8,carb:46,fat:31},
+  {id:"ice_cream",name:"آيس كريم",cal:207,protein:3.5,carb:24,fat:11},
+  {id:"soda",name:"مشروب غازي",cal:41,protein:0,carb:10.6,fat:0},
+  {id:"orange_juice",name:"عصير برتقال طازج",cal:45,protein:0.7,carb:10.4,fat:0.2}
 ];
 
 const QUICK_MEALS=[
@@ -533,7 +588,7 @@ const EX_INFO={
 const WORKOUTS=[{id:"pull",name:"PULL",subtitle:"ظهر + باي + سواعد",groups:[["الظهر",[["عقلة بمساعدة",4,"6-10"],["سحب علوي",3,"8-10"],["سحب أرضي",3,"8-10"],["سحب ذراع مستقيمة",3,"12-15"]]],["الكتف الخلفي",[["Face Pull",3,"12-15"]]],["الباي",[["EZ Bar Curl",3,"8-10"],["Incline Dumbbell Curl",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]},{id:"push",name:"PUSH",subtitle:"صدر + كتف + تراي",groups:[["الصدر",[["Bench Press",3,"6-8"],["Incline Dumbbell Press",3,"8-10"],["Cable Fly",2,"12-15"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Shoulder Press",3,"8-10"]]],["التراي",[["Rope Pushdown",4,"10-12"],["Overhead Cable Extension",3,"10-12"]]]]},{id:"legs",name:"LEGS",subtitle:"أرجل + كتف",groups:[["الأرجل",[["Squat",4,"6-8"],["Romanian Deadlift",3,"8-10"],["Leg Press",3,"10-12"],["Leg Curl",3,"10-12"],["Leg Extension",3,"12-15"],["Standing Calf Raise",4,"15-20"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Rear Delt Machine",3,"12-15"]]]]},{id:"optional",name:"اختياري",subtitle:"ظهر + ذراع + سواعد",groups:[["الظهر",[["Chest Supported Row",3,"8-12"],["Single Arm Lat Pulldown",3,"10-12"],["Straight Arm Pulldown",3,"12-15"]]],["الذراع",[["Hammer Curl",3,"10-12"],["Cable Curl",3,"10-12"],["Pushdown",3,"10-12"],["Overhead Extension",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]}];
 
 const OLD_KEY="albatil-fitness-v1",KEY="albatil-fitness-v2";
-const BLANK_PROFILE_DATA=()=>({name:"محمد",profile:{weight:80.5,goal:75,fat:27.2,height:175,age:25,gender:"male",activity:1.55},history:[],measurements:[],prs:{},draft:null,exerciseLogs:{},nutrition:{logs:[],customFoods:[],targets:{calories:2200,protein:150,carb:220,fat:70}}});
+const BLANK_PROFILE_DATA=()=>({name:"محمد",profile:{weight:80.5,goal:75,fat:27.2,height:175,age:25,gender:"male",activity:1.55},history:[],measurements:[],prs:{},draft:null,exerciseLogs:{},nutrition:{logs:[],customFoods:[],targets:{calories:2200,protein:150,carb:220,fat:70}},mesocycle:{week:1,startedAt:new Date().toISOString()}});
 
 function migrateOld(){
   try{
@@ -640,6 +695,7 @@ function renderDays(){
   $$('.day-card').forEach(b=>b.onclick=()=>openWorkout(b.dataset.id));
 }
 $('#openLibraryBtn').onclick=()=>{renderLibrary();showScreen('library')};
+$('#advanceWeekBtn').onclick=advanceProgramWeek;
 $('#backFromLibrary').onclick=()=>showScreen('workouts');
 
 function renderLibrary(){
@@ -659,20 +715,34 @@ function renderLibrary(){
   $('#libraryList').innerHTML=html;
 }
 
+function getProgramWeek(){return cur().mesocycle?.week||1}
+function isDeloadWeek(){return getProgramWeek()===4}
+function advanceProgramWeek(){
+  const m=cur().mesocycle||(cur().mesocycle={week:1,startedAt:new Date().toISOString()});
+  m.week=m.week>=4?1:m.week+1;
+  save();renderProgramWeekUI();
+  toast(m.week===1?'🔄 بدأت دورة تدريبية جديدة':(m.week===4?'😌 أسبوع تخفيف (Deload)':`الأسبوع ${m.week} من الدورة`));
+}
+function renderProgramWeekUI(){
+  const w=getProgramWeek();
+  const el=$('#programWeekLabel');
+  if(el)el.textContent=isDeloadWeek()?`أسبوع ${w} من 4 · تخفيف (Deload)`:`أسبوع ${w} من 4 · تدريج تلقائي`;
+}
 function suggestedWeight(key,repsRange){
   const logs=cur().exerciseLogs[key];
   if(!logs||!logs.length)return null;
   const last=logs.at(-1);
   if(!last.weight)return null;
   const maxRep=parseInt(String(repsRange).split('-').pop())||last.reps;
-  if(last.reps>=maxRep)return +(last.weight+(last.weight>=40?2.5:1)).toFixed(1);
-  return last.weight;
+  let base=last.reps>=maxRep?+(last.weight+(last.weight>=40?2.5:1)).toFixed(1):last.weight;
+  if(isDeloadWeek())base=+(base*0.85).toFixed(1);
+  return base;
 }
 
 function openWorkout(id,resume){
   currentWorkout=WORKOUTS.find(w=>w.id===id);
   $('#sessionTitle').textContent=currentWorkout.name;
-  $('#sessionSubtitle').textContent=currentWorkout.subtitle;
+  $('#sessionSubtitle').textContent=currentWorkout.subtitle+(isDeloadWeek()?' · 🔄 أسبوع تخفيف':'');
 
   const draft=(resume&&cur().draft&&cur().draft.id===id)?cur().draft:null;
   let html='';
@@ -905,6 +975,25 @@ function renderWeightChart(){
   const pts=cur().measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date))
     .map(m=>({y:m.weight,label:new Date(m.date).toLocaleDateString('ar-SA',{day:'numeric',month:'numeric'})}));
   $('#weightChart').innerHTML=buildLineChart(pts,{unit:' كجم',color:'var(--accent2)'});
+  renderWeightForecast();
+}
+function renderWeightForecast(){
+  const ms=cur().measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const el=$('#weightForecast');
+  if(ms.length<3){el.textContent='📈 سجّل 3 قياسات على الأقل ليظهر توقع وزنك القادم';return}
+  const t0=new Date(ms[0].date).getTime();
+  const xs=ms.map(m=>(new Date(m.date).getTime()-t0)/86400000);
+  const ys=ms.map(m=>m.weight);
+  const n=xs.length;
+  const sumX=xs.reduce((a,b)=>a+b,0),sumY=ys.reduce((a,b)=>a+b,0);
+  const sumXY=xs.reduce((a,x,i)=>a+x*ys[i],0),sumXX=xs.reduce((a,x)=>a+x*x,0);
+  const denom=(n*sumXX-sumX*sumX)||1;
+  const slope=(n*sumXY-sumX*sumY)/denom;
+  const intercept=(sumY-slope*sumX)/n;
+  const lastX=xs.at(-1)+14;
+  const forecast=(slope*lastX+intercept).toFixed(1);
+  const dir=slope<0?'↓':(slope>0?'↑':'→');
+  el.textContent=`📈 توقع وزنك بعد أسبوعين إذا استمريت بنفس الوتيرة: ${forecast} كجم ${dir}`;
 }
 
 function allExerciseKeys(){
@@ -995,6 +1084,21 @@ function renderAnalytics(){
   $('#muscleBars').innerHTML=entries.length?entries.map(([m,v])=>`
     <div class="bar-row"><span>${m}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%"></div></div><b>${Math.round(v)}</b></div>
   `).join(''):'<div class="chart-empty">لا يوجد حجم مسجل خلال آخر 7 أيام</div>';
+
+  const now2=new Date();
+  const thisMonthKey=now2.getFullYear()+'-'+now2.getMonth();
+  const prevD=new Date(now2.getFullYear(),now2.getMonth()-1,1);
+  const prevMonthKey=prevD.getFullYear()+'-'+prevD.getMonth();
+  let thisVol=0,prevVol=0;
+  h.forEach(x=>{
+    const d=new Date(x.date),k=d.getFullYear()+'-'+d.getMonth();
+    if(k===thisMonthKey)thisVol+=x.volume;else if(k===prevMonthKey)prevVol+=x.volume;
+  });
+  const cmpMax=Math.max(1,thisVol,prevVol);
+  $('#monthCompare').innerHTML=`
+    <div class="bar-row"><span>الشهر السابق</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(prevVol/cmpMax*100)}%"></div></div><b>${Math.round(prevVol)}</b></div>
+    <div class="bar-row"><span>الشهر الحالي</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(thisVol/cmpMax*100)}%"></div></div><b>${Math.round(thisVol)}</b></div>
+  `;
 }
 
 function allFoods(){return FOODS.concat(cur().nutrition.customFoods)}
@@ -1027,6 +1131,35 @@ $('#barcodeInput').oninput=()=>{
   if(!code)return;
   const match=cur().nutrition.customFoods.find(f=>f.barcode===code);
   if(match){$('#foodSelect').value=match.id;toast('تم العثور على الصنف ✅')}
+};
+
+let scanStream=null;
+$('#scanBarcodeBtn').onclick=async()=>{
+  if(!('BarcodeDetector'in window)){toast('المسح بالكاميرا غير مدعوم بهذا المتصفح');return}
+  const video=$('#scanVideo');
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;video.style.display='none';$('#scanBarcodeBtn').textContent='📷 مسح بالكاميرا';return}
+  try{
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    video.srcObject=scanStream;video.style.display='block';await video.play();
+    $('#scanBarcodeBtn').textContent='⏹️ إيقاف المسح';
+    const detector=new BarcodeDetector();
+    const loop=async()=>{
+      if(!scanStream)return;
+      try{
+        const codes=await detector.detect(video);
+        if(codes.length){
+          $('#barcodeInput').value=codes[0].rawValue;
+          $('#barcodeInput').dispatchEvent(new Event('input'));
+          toast('📷 تم قراءة الباركود: '+codes[0].rawValue);
+          scanStream.getTracks().forEach(t=>t.stop());scanStream=null;video.style.display='none';
+          $('#scanBarcodeBtn').textContent='📷 مسح بالكاميرا';
+          return;
+        }
+      }catch{}
+      requestAnimationFrame(loop);
+    };
+    loop();
+  }catch{toast('تعذر الوصول للكاميرا')}
 };
 
 $('#addMealBtn').onclick=()=>{
@@ -1165,7 +1298,7 @@ $('#profileChipBtn').onclick=()=>showScreen('settings');
 
 function fullRepaint(){
   renderDays();renderProgress();fillSettings();refreshDashboard();renderWeightChart();
-  populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();
+  populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();renderProgramWeekUI();
   fillNutritionTargets();renderNutritionDay();showScreen('home');
 }
 
@@ -1194,7 +1327,56 @@ $('#installBtn').onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();aw
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 if('Notification'in window&&Notification.permission==='granted')notifEnabled=true;
 
-renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();renderWeightChart();populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();fillNutritionTargets();renderNutritionDay();
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+let cloudDb=null,cloudUser=null;
+function renderCloudUI(){
+  const box=$('#cloudSyncStatus');
+  if(cloudUser){
+    box.textContent=`متصل: ${cloudUser.displayName||cloudUser.email}`;
+    $('#cloudSignInBtn').textContent='تسجيل الخروج';
+    $('#cloudSignInBtn').onclick=()=>firebase.auth().signOut();
+    $('#cloudPushBtn').hidden=false;$('#cloudPullBtn').hidden=false;
+  } else {
+    box.textContent='غير متصل';
+    $('#cloudSignInBtn').textContent='تسجيل الدخول بجوجل';
+    $('#cloudSignInBtn').onclick=async()=>{
+      const provider=new firebase.auth.GoogleAuthProvider();
+      try{await firebase.auth().signInWithPopup(provider)}catch{toast('تعذر تسجيل الدخول')}
+    };
+    $('#cloudPushBtn').hidden=true;$('#cloudPullBtn').hidden=true;
+  }
+}
+async function initCloudSync(){
+  try{await loadScript('./firebase-config.js')}catch{$('#cloudSyncStatus').textContent='🔧 لم يتم إعداد Firebase بعد — راجع README';return}
+  if(!window.ALBATIL_FIREBASE_CONFIG){$('#cloudSyncStatus').textContent='🔧 لم يتم إعداد Firebase بعد — راجع README';return}
+  try{
+    await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+    await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
+    await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js');
+    firebase.initializeApp(window.ALBATIL_FIREBASE_CONFIG);
+    cloudDb=firebase.firestore();
+    firebase.auth().onAuthStateChanged(user=>{cloudUser=user;renderCloudUI()});
+  }catch(e){$('#cloudSyncStatus').textContent='تعذر تحميل خدمة المزامنة'}
+}
+$('#cloudPushBtn').onclick=async()=>{
+  if(!cloudDb||!cloudUser)return;
+  try{await cloudDb.collection('albatil_users').doc(cloudUser.uid).set({state:JSON.stringify(state),updatedAt:Date.now()});toast('تم رفع بياناتك ☁️')}
+  catch{toast('تعذر الرفع')}
+};
+$('#cloudPullBtn').onclick=async()=>{
+  if(!cloudDb||!cloudUser)return;
+  if(!confirm('هذا راح يستبدل بياناتك الحالية بالنسخة السحابية، متأكد؟'))return;
+  try{
+    const doc=await cloudDb.collection('albatil_users').doc(cloudUser.uid).get();
+    if(!doc.exists){toast('لا توجد بيانات محفوظة بعد');return}
+    state=JSON.parse(doc.data().state);
+    localStorage.setItem(KEY,JSON.stringify(state));
+    fullRepaint();toast('تم سحب بياناتك ☁️');
+  }catch{toast('تعذر السحب')}
+};
+initCloudSync();
+
+renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();renderWeightChart();populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();renderProgramWeekUI();fillNutritionTargets();renderNutritionDay();
 </script>
 </body>
 </html>
