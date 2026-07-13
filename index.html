@@ -1,1 +1,495 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0d0f12"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="stylesheet" href="styles.css"><title>Albatil Fitness</title></head><body><div class="app-shell"><header class="topbar"><div><div class="brand-kicker">ALBATIL</div><h1>FITNESS</h1></div><button class="icon-btn" id="installBtn" hidden>＋</button></header><main><section class="screen active" data-screen="home"><div class="hero-card"><div><p class="muted">هلا محمد 👋</p><h2>جاهز تبني أفضل نسخة منك؟</h2></div><div class="goal-ring" id="goalRing"><span id="goalPercent">0%</span></div></div><div class="stats-grid"><article class="stat-card"><span>الوزن الحالي</span><strong id="currentWeight">80.5</strong><small>كجم</small></article><article class="stat-card"><span>الهدف</span><strong id="goalWeight">75</strong><small>كجم</small></article><article class="stat-card"><span>نسبة الدهون</span><strong id="bodyFat">27.2</strong><small>%</small></article><article class="stat-card"><span>تمارين مكتملة</span><strong id="workoutCount">0</strong><small>حصة</small></article></div><button class="primary-btn giant" id="startTodayBtn"><span>ابدأ تمرين اليوم</span><small id="todayWorkoutName">PULL</small></button><section class="panel"><div class="section-title"><h3>آخر نشاط</h3><span id="lastWorkoutDate">لا يوجد بعد</span></div><div class="summary-row"><div><b id="lastWorkoutName">—</b><span>التمرين</span></div><div><b id="lastWorkoutSets">0</b><span>الجولات</span></div><div><b id="lastWorkoutVolume">0</b><span>الحجم كجم</span></div></div></section></section><section class="screen" data-screen="workouts"><div class="section-heading"><p class="muted">3 أيام رسمية + يوم اختياري</p><h2>جدول التمارين</h2></div><div id="workoutDays" class="day-list"></div></section><section class="screen" data-screen="session"><div class="session-head"><button class="ghost-btn" id="backToWorkouts">رجوع</button><div><p class="muted" id="sessionSubtitle"></p><h2 id="sessionTitle"></h2></div><button class="danger-lite" id="resetSessionBtn">مسح</button></div><div class="timer-card"><div><span>مؤقت الراحة</span><strong id="timerText">01:30</strong></div><div class="timer-actions"><button id="timerStartBtn">ابدأ</button><button id="timerResetBtn">إعادة</button></div></div><div id="exerciseList"></div><button class="primary-btn giant" id="finishWorkoutBtn">إنهاء وحفظ التمرين</button></section><section class="screen" data-screen="progress"><div class="section-heading"><p class="muted">تابع نزولك وقوتك</p><h2>التقدم</h2></div><form class="panel form-grid" id="bodyForm"><label>الوزن<input id="weightInput" type="number" step="0.1" required></label><label>نسبة الدهون<input id="fatInput" type="number" step="0.1"></label><label>محيط الخصر<input id="waistInput" type="number" step="0.1"></label><button class="primary-btn" type="submit">حفظ القياس</button></form><section class="panel"><div class="section-title"><h3>آخر القياسات</h3><span id="progressCount">0 إدخال</span></div><div id="progressList" class="history-list"></div></section><section class="panel"><div class="section-title"><h3>أفضل الأرقام</h3><span>PR</span></div><div id="prList" class="history-list"></div></section></section><section class="screen" data-screen="settings"><div class="section-heading"><p class="muted">بياناتك داخل جهازك فقط</p><h2>الإعدادات</h2></div><form class="panel form-grid" id="settingsForm"><label>اسمك<input id="nameInput" type="text"></label><label>الوزن الحالي<input id="settingsWeight" type="number" step="0.1"></label><label>وزن الهدف<input id="settingsGoal" type="number" step="0.1"></label><label>نسبة الدهون<input id="settingsFat" type="number" step="0.1"></label><button class="primary-btn" type="submit">حفظ الإعدادات</button></form><section class="panel"><div class="section-title"><h3>النسخة الاحتياطية</h3></div><div class="backup-actions"><button class="secondary-btn" id="exportBtn">تصدير البيانات</button><label class="secondary-btn file-label">استيراد<input type="file" id="importInput" accept="application/json" hidden></label></div></section></section></main><nav class="bottom-nav"><button class="nav-btn active" data-target="home"><span>⌂</span><small>الرئيسية</small></button><button class="nav-btn" data-target="workouts"><span>🏋</span><small>التمارين</small></button><button class="nav-btn" data-target="progress"><span>↗</span><small>التقدم</small></button><button class="nav-btn" data-target="settings"><span>⚙</span><small>الإعدادات</small></button></nav></div><div class="toast" id="toast"></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0f12">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<title>Albatil Fitness</title>
+<style>
+:root{--bg:#0b0d10;--surface:#15181d;--surface2:#1d2128;--line:#2b3039;--text:#f4f5f7;--muted:#9ca3ad;--accent:#ff5a36;--accent2:#ff8a3d;--good:#58d68d;--danger:#ff6b6b;--gold:#ffc94a;--shadow:0 18px 55px rgba(0,0,0,.28)}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#20242b 0,#0b0d10 45%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.app-shell{max-width:720px;margin:auto;min-height:100vh;padding:18px 16px 96px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.brand-kicker{color:var(--accent);font-size:12px;font-weight:900;letter-spacing:4px}
+.topbar h1{font-size:26px;margin:0;letter-spacing:2px}
+.icon-btn{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:#fff;font-size:24px}
+.screen{display:none}
+.screen.active{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.hero-card,.panel,.timer-card{background:linear-gradient(145deg,var(--surface),#101318);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.hero-card{padding:22px;display:flex;justify-content:space-between;align-items:center;gap:18px}
+.hero-card h2{margin:5px 0 0;font-size:25px;line-height:1.3}
+.muted{color:var(--muted);margin:0}
+.goal-ring{--p:0;width:88px;height:88px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),#2d323b 0);position:relative;flex:0 0 auto}
+.goal-ring:after{content:"";position:absolute;inset:8px;border-radius:50%;background:#14171c}
+.goal-ring span{position:relative;z-index:1;font-weight:900}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.stat-card span,.stat-card small{color:var(--muted);display:block}
+.stat-card strong{font-size:28px}
+.primary-btn,.secondary-btn,.ghost-btn,.danger-lite{border:0;border-radius:14px;padding:13px 16px;font-weight:800}
+.primary-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a0c07}
+.secondary-btn{background:var(--surface2);color:var(--text);border:1px solid var(--line)}
+.ghost-btn{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.danger-lite{background:rgba(255,107,107,.1);color:var(--danger);border:1px solid rgba(255,107,107,.2)}
+.giant{width:100%;padding:18px;display:flex;justify-content:space-between;align-items:center;font-size:17px;margin:4px 0 14px}
+.panel{padding:18px;margin-top:14px}
+.section-title,.section-heading,.session-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.section-title h3,.section-heading h2,.session-head h2{margin:0}
+.section-title span{color:var(--muted);font-size:12px}
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin-top:18px}
+.summary-row div+div{border-right:1px solid var(--line)}
+.summary-row b,.summary-row span{display:block}
+.summary-row b{font-size:18px}
+.summary-row span{font-size:11px;color:var(--muted)}
+.section-heading{align-items:flex-end;margin:14px 0 18px}
+.day-list{display:grid;gap:12px}
+.day-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--text);text-align:right}
+.day-card h3{margin:0 0 4px}
+.day-card p{margin:0;color:var(--muted);font-size:13px}
+.day-badge{width:52px;height:52px;border-radius:16px;background:rgba(255,90,54,.12);color:var(--accent);display:grid;place-items:center;font-weight:900}
+.session-head{margin-bottom:14px}
+.resume-banner{display:none;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(135deg,rgba(255,90,54,.16),rgba(255,138,61,.08));border:1px solid rgba(255,90,54,.3);border-radius:18px;padding:14px 16px;margin-bottom:14px}
+.resume-banner.show{display:flex}
+.resume-banner b{display:block}
+.resume-banner small{color:var(--muted)}
+
+/* circular timer */
+.timer-card{padding:18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:14px}
+.timer-ring-wrap{position:relative;width:96px;height:96px;flex:0 0 auto}
+.timer-ring-wrap svg{width:96px;height:96px;transform:rotate(-90deg)}
+.timer-ring-bg{fill:none;stroke:var(--surface2);stroke-width:8}
+.timer-ring-fg{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .3s}
+.timer-ring-fg.low{stroke:var(--danger)}
+.timer-ring-text{position:absolute;inset:0;display:grid;place-items:center;font-weight:900;font-size:18px}
+.timer-info{flex:1}
+.timer-info span{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+.timer-actions{display:flex;gap:8px}
+.timer-actions button{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:12px;padding:10px 13px}
+
+/* session progress + live stats */
+.session-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mini-stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.mini-stat span{display:block;color:var(--muted);font-size:11px}
+.mini-stat b{font-size:20px}
+.progress-track{height:10px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-bottom:16px}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .4s ease}
+
+.exercise-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;transition:box-shadow .4s,transform .2s}
+.exercise-card.pr-flash{box-shadow:0 0 0 2px var(--gold),0 0 30px rgba(255,201,74,.35)}
+.exercise-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:12px}
+.exercise-head h3{margin:0}
+.exercise-head small{color:var(--accent)}
+.set-row{display:grid;grid-template-columns:26px 1fr 1fr 1fr 40px 30px;gap:6px;align-items:end;margin-top:9px}
+.set-row span{align-self:center;text-align:center;color:var(--muted);font-size:12px}
+.set-row label{font-size:10px;color:var(--muted)}
+.set-row input{width:100%;margin-top:4px;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 6px;text-align:center}
+.set-check{height:40px;border-radius:11px;border:1px solid var(--line);background:#22272f;color:#fff}
+.set-check.done{background:var(--good);color:#082012}
+.set-remove{height:40px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--danger)}
+.add-set-btn{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:12px;padding:9px}
+.exercise-notes{width:100%;margin-top:12px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:10px;resize:vertical;min-height:38px;font-size:13px}
+.exercise-notes::placeholder{color:var(--muted)}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid label{font-size:12px;color:var(--muted)}
+.form-grid input{width:100%;margin-top:6px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px}
+.form-grid button{grid-column:1/-1}
+.history-list{display:grid;gap:8px;margin-top:12px}
+.history-item{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.history-item small{color:var(--muted)}
+.backup-actions{display:flex;gap:10px}
+.file-label{display:inline-flex;align-items:center}
+.bottom-nav{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:min(calc(100% - 20px),700px);display:grid;grid-template-columns:repeat(4,1fr);background:rgba(19,22,27,.94);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;padding:7px;z-index:20}
+.nav-btn{border:0;background:transparent;color:var(--muted);border-radius:14px;padding:8px;display:grid;gap:2px;place-items:center}
+.nav-btn.active{background:rgba(255,90,54,.13);color:var(--accent)}
+.nav-btn span{font-size:18px}
+.nav-btn small{font-size:11px}
+.toast{position:fixed;bottom:95px;left:50%;transform:translate(-50%,20px);opacity:0;background:#f3f4f6;color:#111;padding:10px 18px;border-radius:99px;font-weight:800;transition:.2s;z-index:99;max-width:88%;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.pr{background:var(--gold);color:#2b1c00}
+@media(max-width:480px){.app-shell{padding-inline:12px}.hero-card h2{font-size:21px}.goal-ring{width:76px;height:76px}.set-row{grid-template-columns:22px 1fr 1fr 1fr 34px 26px;gap:4px}.set-row input{padding:9px 2px}.form-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div><div class="brand-kicker">ALBATIL</div><h1>FITNESS</h1></div>
+    <button class="icon-btn" id="installBtn" hidden>＋</button>
+  </header>
+
+  <main>
+    <section class="screen active" data-screen="home">
+      <div class="resume-banner" id="resumeBanner">
+        <div><b>عندك حصة غير مكتملة</b><small id="resumeText"></small></div>
+        <button class="primary-btn" id="resumeBtn">استئناف</button>
+      </div>
+      <div class="hero-card">
+        <div><p class="muted">هلا محمد 👋</p><h2>جاهز تبني أفضل نسخة منك؟</h2></div>
+        <div class="goal-ring" id="goalRing"><span id="goalPercent">0%</span></div>
+      </div>
+      <div class="stats-grid">
+        <article class="stat-card"><span>الوزن الحالي</span><strong id="currentWeight">80.5</strong><small>كجم</small></article>
+        <article class="stat-card"><span>الهدف</span><strong id="goalWeight">75</strong><small>كجم</small></article>
+        <article class="stat-card"><span>نسبة الدهون</span><strong id="bodyFat">27.2</strong><small>%</small></article>
+        <article class="stat-card"><span>تمارين مكتملة</span><strong id="workoutCount">0</strong><small>حصة</small></article>
+      </div>
+      <button class="primary-btn giant" id="startTodayBtn"><span>ابدأ تمرين اليوم</span><small id="todayWorkoutName">PULL</small></button>
+      <section class="panel">
+        <div class="section-title"><h3>آخر نشاط</h3><span id="lastWorkoutDate">لا يوجد بعد</span></div>
+        <div class="summary-row">
+          <div><b id="lastWorkoutName">—</b><span>التمرين</span></div>
+          <div><b id="lastWorkoutSets">0</b><span>الجولات</span></div>
+          <div><b id="lastWorkoutVolume">0</b><span>الحجم كجم</span></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="screen" data-screen="workouts">
+      <div class="section-heading"><p class="muted">3 أيام رسمية + يوم اختياري</p><h2>جدول التمارين</h2></div>
+      <div id="workoutDays" class="day-list"></div>
+    </section>
+
+    <section class="screen" data-screen="session">
+      <div class="session-head">
+        <button class="ghost-btn" id="backToWorkouts">رجوع</button>
+        <div><p class="muted" id="sessionSubtitle"></p><h2 id="sessionTitle"></h2></div>
+        <button class="danger-lite" id="resetSessionBtn">مسح</button>
+      </div>
+
+      <div class="session-stats">
+        <div class="mini-stat"><span>الحجم الحالي</span><b id="liveVolume">0</b></div>
+        <div class="mini-stat"><span>الجولات المنجزة</span><b id="liveSetsDone">0 / 0</b></div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="sessionProgressFill"></div></div>
+
+      <div class="timer-card">
+        <div class="timer-ring-wrap">
+          <svg viewBox="0 0 96 96">
+            <circle class="timer-ring-bg" cx="48" cy="48" r="42"></circle>
+            <circle class="timer-ring-fg" id="timerRing" cx="48" cy="48" r="42"></circle>
+          </svg>
+          <div class="timer-ring-text" id="timerText">01:30</div>
+        </div>
+        <div class="timer-info">
+          <span>مؤقت الراحة التلقائي</span>
+          <div class="timer-actions">
+            <button id="timerStartBtn">ابدأ</button>
+            <button id="timerResetBtn">إعادة</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="exerciseList"></div>
+      <button class="primary-btn giant" id="finishWorkoutBtn">إنهاء وحفظ التمرين</button>
+    </section>
+
+    <section class="screen" data-screen="progress">
+      <div class="section-heading"><p class="muted">تابع نزولك وقوتك</p><h2>التقدم</h2></div>
+      <form class="panel form-grid" id="bodyForm">
+        <label>الوزن<input id="weightInput" type="number" step="0.1" required></label>
+        <label>نسبة الدهون<input id="fatInput" type="number" step="0.1"></label>
+        <label>محيط الخصر<input id="waistInput" type="number" step="0.1"></label>
+        <button class="primary-btn" type="submit">حفظ القياس</button>
+      </form>
+      <section class="panel">
+        <div class="section-title"><h3>آخر القياسات</h3><span id="progressCount">0 إدخال</span></div>
+        <div id="progressList" class="history-list"></div>
+      </section>
+      <section class="panel">
+        <div class="section-title"><h3>أفضل الأرقام</h3><span>PR</span></div>
+        <div id="prList" class="history-list"></div>
+      </section>
+    </section>
+
+    <section class="screen" data-screen="settings">
+      <div class="section-heading"><p class="muted">بياناتك داخل جهازك فقط</p><h2>الإعدادات</h2></div>
+      <form class="panel form-grid" id="settingsForm">
+        <label>اسمك<input id="nameInput" type="text"></label>
+        <label>الوزن الحالي<input id="settingsWeight" type="number" step="0.1"></label>
+        <label>وزن الهدف<input id="settingsGoal" type="number" step="0.1"></label>
+        <label>نسبة الدهون<input id="settingsFat" type="number" step="0.1"></label>
+        <button class="primary-btn" type="submit">حفظ الإعدادات</button>
+      </form>
+      <section class="panel">
+        <div class="section-title"><h3>النسخة الاحتياطية</h3></div>
+        <div class="backup-actions">
+          <button class="secondary-btn" id="exportBtn">تصدير البيانات</button>
+          <label class="secondary-btn file-label">استيراد<input type="file" id="importInput" accept="application/json" hidden></label>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-target="home"><span>⌂</span><small>الرئيسية</small></button>
+    <button class="nav-btn" data-target="workouts"><span>🏋</span><small>التمارين</small></button>
+    <button class="nav-btn" data-target="progress"><span>↗</span><small>التقدم</small></button>
+    <button class="nav-btn" data-target="settings"><span>⚙</span><small>الإعدادات</small></button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const WORKOUTS=[{id:"pull",name:"PULL",subtitle:"ظهر + باي + سواعد",groups:[["الظهر",[["عقلة بمساعدة",4,"6-10"],["سحب علوي",3,"8-10"],["سحب أرضي",3,"8-10"],["سحب ذراع مستقيمة",3,"12-15"]]],["الكتف الخلفي",[["Face Pull",3,"12-15"]]],["الباي",[["EZ Bar Curl",3,"8-10"],["Incline Dumbbell Curl",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]},{id:"push",name:"PUSH",subtitle:"صدر + كتف + تراي",groups:[["الصدر",[["Bench Press",3,"6-8"],["Incline Dumbbell Press",3,"8-10"],["Cable Fly",2,"12-15"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Shoulder Press",3,"8-10"]]],["التراي",[["Rope Pushdown",4,"10-12"],["Overhead Cable Extension",3,"10-12"]]]]},{id:"legs",name:"LEGS",subtitle:"أرجل + كتف",groups:[["الأرجل",[["Squat",4,"6-8"],["Romanian Deadlift",3,"8-10"],["Leg Press",3,"10-12"],["Leg Curl",3,"10-12"],["Leg Extension",3,"12-15"],["Standing Calf Raise",4,"15-20"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Rear Delt Machine",3,"12-15"]]]]},{id:"optional",name:"اختياري",subtitle:"ظهر + ذراع + سواعد",groups:[["الظهر",[["Chest Supported Row",3,"8-12"],["Single Arm Lat Pulldown",3,"10-12"],["Straight Arm Pulldown",3,"12-15"]]],["الذراع",[["Hammer Curl",3,"10-12"],["Cable Curl",3,"10-12"],["Pushdown",3,"10-12"],["Overhead Extension",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]}];
+
+const KEY="albatil-fitness-v1",DEFAULT={profile:{name:"محمد",weight:80.5,goal:75,fat:27.2},history:[],measurements:[],prs:{},draft:null};
+let state=load(),currentWorkout=null,restDuration=90,timer=restDuration,timerId=null,deferredPrompt=null,autosaveId=null;
+const RING_R=42,RING_C=2*Math.PI*RING_R;
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+function load(){try{return {...DEFAULT,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch{return JSON.parse(JSON.stringify(DEFAULT))}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));refreshDashboard()}
+function toast(m,cls){const t=$("#toast");t.textContent=m;t.className="toast show"+(cls?" "+cls:"");setTimeout(()=>t.classList.remove("show"),1900)}
+function showScreen(n){$$('.screen').forEach(x=>x.classList.toggle('active',x.dataset.screen===n));$$('.nav-btn').forEach(x=>x.classList.toggle('active',x.dataset.target===n));scrollTo({top:0,behavior:'smooth'})}
+$$('.nav-btn').forEach(b=>b.onclick=()=>showScreen(b.dataset.target));
+
+function refreshDashboard(){
+  const p=state.profile;
+  $('#currentWeight').textContent=p.weight;$('#goalWeight').textContent=p.goal;$('#bodyFat').textContent=p.fat;$('#workoutCount').textContent=state.history.length;
+  const start=80.5,total=Math.max(.1,start-p.goal),done=Math.max(0,start-p.weight),percent=Math.min(100,Math.round(done/total*100));
+  $('#goalPercent').textContent=percent+'%';$('#goalRing').style.setProperty('--p',percent);
+  const todayIndex=new Date().getDay()%3;
+  $('#todayWorkoutName').textContent=WORKOUTS[todayIndex].name;
+  $('#startTodayBtn').onclick=()=>openWorkout(WORKOUTS[todayIndex].id);
+  const last=state.history.at(-1);
+  $('#lastWorkoutDate').textContent=last?new Date(last.date).toLocaleDateString('ar-SA'):'لا يوجد بعد';
+  $('#lastWorkoutName').textContent=last?.name||'—';
+  $('#lastWorkoutSets').textContent=last?.sets||0;
+  $('#lastWorkoutVolume').textContent=Math.round(last?.volume||0);
+  paintResumeBanner();
+}
+
+function paintResumeBanner(){
+  const b=$('#resumeBanner');
+  if(state.draft){
+    const w=WORKOUTS.find(x=>x.id===state.draft.id);
+    b.classList.add('show');
+    $('#resumeText').textContent=w?`${w.name} · ${new Date(state.draft.date).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
+    $('#resumeBtn').onclick=()=>openWorkout(state.draft.id,true);
+  } else b.classList.remove('show');
+}
+
+function renderDays(){
+  $('#workoutDays').innerHTML=WORKOUTS.map((w,i)=>`<button class="day-card" data-id="${w.id}"><div><h3>${w.name}</h3><p>${w.subtitle}</p></div><div class="day-badge">${i+1}</div></button>`).join('');
+  $$('.day-card').forEach(b=>b.onclick=()=>openWorkout(b.dataset.id));
+}
+
+function openWorkout(id,resume){
+  currentWorkout=WORKOUTS.find(w=>w.id===id);
+  $('#sessionTitle').textContent=currentWorkout.name;
+  $('#sessionSubtitle').textContent=currentWorkout.subtitle;
+
+  const draft=(resume&&state.draft&&state.draft.id===id)?state.draft:null;
+  let html='';
+  currentWorkout.groups.forEach(([g,exs])=>{
+    html+=`<div class="section-title" style="margin:18px 2px 8px"><h3>${g}</h3></div>`;
+    exs.forEach(([name,sets,reps])=>{
+      const key=currentWorkout.id+'__'+name,pr=state.prs[key];
+      const draftEx=draft?.exercises?.[key];
+      const setCount=draftEx?.sets?.length||sets;
+      let rows='';
+      for(let i=0;i<setCount;i++){
+        const dv=draftEx?.sets?.[i]||{};
+        rows+=`<div class="set-row" data-i="${i}">
+          <span>${i+1}</span>
+          <label>كجم<input class="weight" type="number" step="0.5" value="${dv.weight??''}"></label>
+          <label>عدات<input class="reps" type="number" value="${dv.reps??''}"></label>
+          <label>RIR<input class="rir" type="number" min="0" max="5" value="${dv.rir??''}"></label>
+          <button class="set-check${dv.done?' done':''}">✓</button>
+          <button class="set-remove" title="حذف">×</button>
+        </div>`;
+      }
+      html+=`<article class="exercise-card" data-ex="${key}">
+        <div class="exercise-head"><div><h3>${name}</h3><small>${sets} جولات × ${reps}</small></div><small class="pr-tag">${pr?`PR ${pr.weight}×${pr.reps}`:'لا يوجد PR'}</small></div>
+        <div class="sets-wrap">${rows}</div>
+        <button class="add-set-btn">+ إضافة جولة</button>
+        <textarea class="exercise-notes" placeholder="ملاحظات على هذا التمرين...">${draftEx?.notes||''}</textarea>
+      </article>`;
+    });
+  });
+  $('#exerciseList').innerHTML=html;
+  wireExerciseCards();
+  updateSessionStats();
+  showScreen('session');
+}
+
+function wireExerciseCards(){
+  $$('.exercise-card').forEach(card=>{
+    card.querySelector('.add-set-btn').onclick=()=>{
+      const wrap=card.querySelector('.sets-wrap');
+      const i=wrap.children.length;
+      const row=document.createElement('div');
+      row.className='set-row';row.dataset.i=i;
+      row.innerHTML=`<span>${i+1}</span><label>كجم<input class="weight" type="number" step="0.5"></label><label>عدات<input class="reps" type="number"></label><label>RIR<input class="rir" type="number" min="0" max="5"></label><button class="set-check">✓</button><button class="set-remove" title="حذف">×</button>`;
+      wrap.appendChild(row);
+      wireRow(row,card);
+      scheduleAutosave();
+      updateSessionStats();
+    };
+    $$('.set-row',card).forEach(row=>wireRow(row,card));
+    card.querySelector('.exercise-notes').oninput=()=>scheduleAutosave();
+  });
+}
+
+function wireRow(row,card){
+  row.querySelector('.set-check').onclick=(e)=>{
+    const btn=e.currentTarget;
+    btn.classList.toggle('done');
+    if(btn.classList.contains('done')){
+      startTimer();
+      navigator.vibrate?.(40);
+      checkLivePR(card,row);
+    }
+    updateSessionStats();
+    scheduleAutosave();
+  };
+  row.querySelector('.set-remove').onclick=()=>{
+    const wrap=card.querySelector('.sets-wrap');
+    if(wrap.children.length<=1){toast('لازم تبقى جولة واحدة على الأقل');return}
+    row.remove();
+    [...wrap.children].forEach((r,i)=>{r.dataset.i=i;r.querySelector('span').textContent=i+1});
+    updateSessionStats();
+    scheduleAutosave();
+  };
+  $$('input',row).forEach(inp=>inp.oninput=()=>{updateSessionStats();scheduleAutosave()});
+}
+
+function checkLivePR(card,row){
+  const key=card.dataset.ex;
+  const weight=+row.querySelector('.weight').value||0,reps=+row.querySelector('.reps').value||0;
+  const old=state.prs[key];
+  if(weight&&reps&&(!old||weight>old.weight||(weight===old.weight&&reps>old.reps))){
+    card.classList.add('pr-flash');
+    setTimeout(()=>card.classList.remove('pr-flash'),1600);
+    toast('🏆 PR جديد! استمر يا محمد','pr');
+  }
+}
+
+function updateSessionStats(){
+  let volume=0,done=0,total=0;
+  $$('.exercise-card').forEach(card=>{
+    $$('.set-row',card).forEach(row=>{
+      total++;
+      const btn=row.querySelector('.set-check');
+      if(btn.classList.contains('done')){
+        done++;
+        volume+=(+row.querySelector('.weight').value||0)*(+row.querySelector('.reps').value||0);
+      }
+    });
+  });
+  $('#liveVolume').textContent=Math.round(volume);
+  $('#liveSetsDone').textContent=`${done} / ${total}`;
+  $('#sessionProgressFill').style.width=(total?Math.round(done/total*100):0)+'%';
+}
+
+function scheduleAutosave(){
+  clearTimeout(autosaveId);
+  autosaveId=setTimeout(()=>{
+    if(!currentWorkout)return;
+    const exercises={};
+    $$('.exercise-card').forEach(card=>{
+      const key=card.dataset.ex;
+      const sets=$$('.set-row',card).map(row=>({
+        weight:row.querySelector('.weight').value?+row.querySelector('.weight').value:null,
+        reps:row.querySelector('.reps').value?+row.querySelector('.reps').value:null,
+        rir:row.querySelector('.rir').value?+row.querySelector('.rir').value:null,
+        done:row.querySelector('.set-check').classList.contains('done')
+      }));
+      exercises[key]={sets,notes:card.querySelector('.exercise-notes').value};
+    });
+    state.draft={id:currentWorkout.id,date:new Date().toISOString(),exercises};
+    localStorage.setItem(KEY,JSON.stringify(state));
+  },400);
+}
+
+$('#backToWorkouts').onclick=()=>showScreen('workouts');
+$('#resetSessionBtn').onclick=()=>{if(confirm('مسح بيانات الحصة الحالية؟')){state.draft=null;save();openWorkout(currentWorkout.id)}};
+
+function startTimer(){
+  clearInterval(timerId);timer=restDuration;paintTimer();
+  timerId=setInterval(()=>{
+    timer--;paintTimer();
+    if(timer<=0){clearInterval(timerId);navigator.vibrate?.([150,80,150]);toast('انتهت الراحة 🔥')}
+  },1000);
+}
+function paintTimer(){
+  const m=String(Math.floor(Math.max(0,timer)/60)).padStart(2,'0'),s=String(Math.max(0,timer)%60).padStart(2,'0');
+  $('#timerText').textContent=`${m}:${s}`;
+  const ratio=Math.max(0,timer)/restDuration;
+  const offset=RING_C*(1-ratio);
+  const ring=$('#timerRing');
+  ring.style.strokeDasharray=RING_C;
+  ring.style.strokeDashoffset=offset;
+  ring.classList.toggle('low',timer<=10&&timer>0);
+}
+$('#timerStartBtn').onclick=startTimer;
+$('#timerResetBtn').onclick=()=>{clearInterval(timerId);timer=restDuration;paintTimer()};
+
+$('#finishWorkoutBtn').onclick=()=>{
+  let sets=0,volume=0;const notes={};
+  $$('.exercise-card').forEach(card=>{
+    const key=card.dataset.ex;
+    const noteVal=card.querySelector('.exercise-notes').value.trim();
+    if(noteVal)notes[key]=noteVal;
+    $$('.set-row',card).forEach(row=>{
+      if(!row.querySelector('.set-check').classList.contains('done'))return;
+      const weight=+row.querySelector('.weight').value||0,reps=+row.querySelector('.reps').value||0;
+      sets++;volume+=weight*reps;
+      const old=state.prs[key];
+      if(weight&&reps&&(!old||weight>old.weight||(weight===old.weight&&reps>old.reps)))state.prs[key]={weight,reps,date:new Date().toISOString()};
+    });
+  });
+  if(!sets){toast('سجّل جولة واحدة على الأقل');return}
+  state.history.push({date:new Date().toISOString(),id:currentWorkout.id,name:currentWorkout.name,sets,volume,notes});
+  state.draft=null;
+  save();renderProgress();toast('تم حفظ التمرين 💪');showScreen('home');
+};
+
+$('#bodyForm').onsubmit=e=>{
+  e.preventDefault();
+  const item={date:new Date().toISOString(),weight:+$('#weightInput').value,fat:+$('#fatInput').value||null,waist:+$('#waistInput').value||null};
+  state.measurements.push(item);state.profile.weight=item.weight;if(item.fat)state.profile.fat=item.fat;
+  save();renderProgress();e.target.reset();toast('تم حفظ القياس');
+};
+
+function renderProgress(){
+  $('#progressCount').textContent=state.measurements.length+' إدخال';
+  $('#progressList').innerHTML=state.measurements.slice().reverse().slice(0,10).map(x=>`<div class="history-item"><div><b>${x.weight} كجم</b><br><small>${x.fat?x.fat+'% دهون':''} ${x.waist?'· خصر '+x.waist+' سم':''}</small></div><small>${new Date(x.date).toLocaleDateString('ar-SA')}</small></div>`).join('')||'<div class="history-item"><small>لا توجد قياسات بعد</small></div>';
+  const prs=Object.entries(state.prs).sort((a,b)=>new Date(b[1].date)-new Date(a[1].date)).slice(0,12);
+  $('#prList').innerHTML=prs.map(([k,v])=>`<div class="history-item"><div><b>${k.split('__')[1]}</b><br><small>${new Date(v.date).toLocaleDateString('ar-SA')}</small></div><b>${v.weight} × ${v.reps}</b></div>`).join('')||'<div class="history-item"><small>لا توجد أرقام قياسية بعد</small></div>';
+}
+
+function fillSettings(){
+  const p=state.profile;
+  $('#nameInput').value=p.name;$('#settingsWeight').value=p.weight;$('#settingsGoal').value=p.goal;$('#settingsFat').value=p.fat;
+}
+$('#settingsForm').onsubmit=e=>{
+  e.preventDefault();
+  state.profile={name:$('#nameInput').value||'محمد',weight:+$('#settingsWeight').value||80.5,goal:+$('#settingsGoal').value||75,fat:+$('#settingsFat').value||27.2};
+  save();toast('تم حفظ الإعدادات');
+};
+
+$('#exportBtn').onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='albatil-fitness-backup.json';a.click();URL.revokeObjectURL(a.href);
+};
+$('#importInput').onchange=async e=>{
+  try{state=JSON.parse(await e.target.files[0].text());save();renderProgress();fillSettings();toast('تم استيراد البيانات')}
+  catch{toast('ملف غير صالح')}
+};
+
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('#installBtn').hidden=false});
+$('#installBtn').onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$('#installBtn').hidden=true}};
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+
+renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();
+</script>
+</body>
+</html>
