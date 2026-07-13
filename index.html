@@ -12,6 +12,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#080b10;--surface:#111722;--surface2:#182233;--line:#26324a;--text:#f2f5f9;--muted:#8b96ad;--accent:#28e0b8;--accent2:#5b8cff;--good:#28e0b8;--danger:#ff6178;--gold:#f4c469;--violet:#8b7bff;--shadow:0 18px 55px rgba(0,10,25,.4)}
+[data-theme="light"]{--bg:#f3f5f9;--surface:#ffffff;--surface2:#eef1f6;--line:#dbe1ea;--text:#0f1621;--muted:#5b667a;--shadow:0 18px 45px rgba(20,40,80,.1)}
+@media print{
+  body *{visibility:hidden}
+  #printReport,#printReport *{visibility:visible}
+  #printReport{position:absolute;inset:0;padding:24px}
+}
 *{box-sizing:border-box}
 html{background:var(--bg)}
 body{margin:0;background:radial-gradient(circle at 50% -10%,#152033 0,#080b10 45%);color:var(--text);font-family:"Tajawal",system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh}
@@ -41,8 +47,8 @@ a:hover{color:var(--accent)}
 .streak-banner b{display:block;color:var(--gold);font-size:16px}
 .streak-banner small{color:var(--muted)}
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0}
-.tab-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px;margin-bottom:14px}
-.tab-btn{border:0;background:transparent;color:var(--muted);border-radius:12px;padding:10px 4px;font-weight:800;font-size:13px}
+.tab-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px;margin-bottom:14px}
+.tab-btn{border:0;background:transparent;color:var(--muted);border-radius:12px;padding:10px 2px;font-weight:800;font-size:12px}
 .tab-btn.active{background:linear-gradient(135deg,var(--accent2),var(--violet));color:#fff}
 .progress-tab{display:none}
 .progress-tab.active{display:block;animation:fade .22s ease}
@@ -188,6 +194,18 @@ a:hover{color:var(--accent)}
 .profile-row-actions{display:flex;gap:6px}
 .profile-row-actions button{border:0;background:transparent;color:var(--muted);font-size:16px;padding:4px}
 .sync-note{font-size:12px;color:var(--muted);background:var(--surface2);border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:12px}
+.schedule-day{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}
+.schedule-day-head{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.schedule-day-head input{flex:1;background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 12px;font-weight:800}
+.schedule-ex-row{display:grid;grid-template-columns:1fr 50px 60px 30px;gap:6px;margin-bottom:6px}
+.schedule-ex-row input{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;text-align:center}
+.schedule-ex-row input:first-child{text-align:right}
+.achv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px}
+.achv-card{background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:center;opacity:.35}
+.achv-card.unlocked{opacity:1;border-color:var(--gold)}
+.achv-card span{font-size:26px;display:block;margin-bottom:6px}
+.achv-card b{display:block;font-size:12px}
+.achv-card small{color:var(--muted);font-size:10px}
 @media(max-width:480px){.app-shell{padding-inline:12px}.hero-card h2{font-size:21px}.goal-ring{width:76px;height:76px}.set-row{grid-template-columns:22px 1fr 1fr 1fr 34px 26px;gap:4px}.set-row input{padding:9px 2px}.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -233,6 +251,7 @@ a:hover{color:var(--accent)}
       <div class="section-heading"><p class="muted">3 أيام رسمية + يوم اختياري</p><h2>جدول التمارين</h2></div>
       <div class="link-row">
         <button class="secondary-btn" id="openLibraryBtn" style="flex:1">📚 مكتبة التمارين</button>
+        <button class="secondary-btn" id="openEditScheduleBtn" style="flex:1">✏️ تخصيص الجدول</button>
       </div>
       <section class="panel" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
         <div><div class="section-title"><h3 style="font-size:14px">🗓️ دورة التدريج التلقائي</h3></div><span class="muted" id="programWeekLabel" style="font-size:13px">أسبوع 1 من 4</span></div>
@@ -248,6 +267,16 @@ a:hover{color:var(--accent)}
         <div></div>
       </div>
       <div id="libraryList"></div>
+    </section>
+
+    <section class="screen" data-screen="editSchedule" data-screen-label="تخصيص الجدول">
+      <div class="session-head">
+        <button class="ghost-btn" id="backFromEditSchedule">رجوع</button>
+        <div><p class="muted">أضف/احذف أيام وتمارين</p><h2>تخصيص الجدول</h2></div>
+        <button class="ghost-btn" id="resetScheduleBtn">استرجاع الافتراضي</button>
+      </div>
+      <div id="scheduleEditorList"></div>
+      <button class="primary-btn giant" id="addScheduleDayBtn">+ إضافة يوم تمرين جديد</button>
     </section>
 
     <section class="screen" data-screen="session" data-screen-label="الحصة">
@@ -291,6 +320,7 @@ a:hover{color:var(--accent)}
         <button class="tab-btn" data-tab="strengthTab">القوة</button>
         <button class="tab-btn" data-tab="calendarTab">التقويم</button>
         <button class="tab-btn" data-tab="analyticsTab">التحليلات</button>
+        <button class="tab-btn" data-tab="achievementsTab">الإنجازات</button>
       </div>
 
       <div class="progress-tab active" id="weightTab">
@@ -355,6 +385,17 @@ a:hover{color:var(--accent)}
         <section class="panel">
           <div class="section-title"><h3>مقارنة الأشهر</h3></div>
           <div id="monthCompare" class="bars-chart"></div>
+        </section>
+        <section class="panel">
+          <div class="section-title"><h3>🧾 تقرير قابل للطباعة/المشاركة</h3></div>
+          <button class="secondary-btn" id="exportReportBtn" style="width:100%">طباعة / حفظ PDF</button>
+        </section>
+      </div>
+
+      <div class="progress-tab" id="achievementsTab">
+        <section class="panel">
+          <div class="section-title"><h3>إنجازاتك</h3><span id="achvCount">0 / 0</span></div>
+          <div id="achvGrid" class="achv-grid"></div>
         </section>
       </div>
     </section>
@@ -446,6 +487,27 @@ a:hover{color:var(--accent)}
       </section>
 
       <section class="panel">
+        <div class="section-title"><h3>المظهر</h3></div>
+        <button class="secondary-btn" id="themeToggleBtn" style="width:100%">🌗 تبديل الوضع (داكن/فاتح)</button>
+      </section>
+
+      <section class="panel">
+        <div class="section-title"><h3>خطوات النشاط اليومية</h3><span>يدوياً</span></div>
+        <div class="form-grid">
+          <label>الخطوات<input id="dailySteps" type="number" placeholder="0"></label>
+          <label>سعرات محروقة إضافية<input id="dailyBurnInput" type="number" placeholder="0"></label>
+        </div>
+        <button class="secondary-btn" id="saveDailyBurnBtn" style="width:100%;margin-top:10px">حفظ</button>
+        <div class="sync-note">⚠️ مزامنة تلقائية حقيقية مع Huawei Health / Google Fit / Apple Health مو ممكنة من تطبيق ويب عادي مثل هذا — هذى المنصات تشترط تطبيق جوال (Native) مربوط بحسابها رسميًا. لحين ذاك انسخ الخطوات/السعرات المحروقة يدويًا وبنضيفها لميزانية سعراتك.</div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title"><h3>مشاركة مع المدرّب</h3></div>
+        <button class="secondary-btn" id="shareTrainerBtn" style="width:100%">📤 تصدير ملخص تقدم (HTML)</button>
+        <div class="sync-note">يحمّل ملف ملخص جاهز تقدر ترسله لمدرّبك عبر واتساب أو ايميل.</div>
+      </section>
+
+      <section class="panel">
         <div class="section-title"><h3>الإشعارات</h3></div>
         <button class="secondary-btn" id="notifBtn" style="width:100%">🔔 تفعيل تنبيه انتهاء الراحة</button>
       </section>
@@ -479,6 +541,7 @@ a:hover{color:var(--accent)}
     <button class="nav-btn" data-target="settings"><span>⚙</span><small>الإعدادات</small></button>
   </nav>
 </div>
+<div id="printReport" style="display:none"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -588,7 +651,8 @@ const EX_INFO={
 const WORKOUTS=[{id:"pull",name:"PULL",subtitle:"ظهر + باي + سواعد",groups:[["الظهر",[["عقلة بمساعدة",4,"6-10"],["سحب علوي",3,"8-10"],["سحب أرضي",3,"8-10"],["سحب ذراع مستقيمة",3,"12-15"]]],["الكتف الخلفي",[["Face Pull",3,"12-15"]]],["الباي",[["EZ Bar Curl",3,"8-10"],["Incline Dumbbell Curl",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]},{id:"push",name:"PUSH",subtitle:"صدر + كتف + تراي",groups:[["الصدر",[["Bench Press",3,"6-8"],["Incline Dumbbell Press",3,"8-10"],["Cable Fly",2,"12-15"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Shoulder Press",3,"8-10"]]],["التراي",[["Rope Pushdown",4,"10-12"],["Overhead Cable Extension",3,"10-12"]]]]},{id:"legs",name:"LEGS",subtitle:"أرجل + كتف",groups:[["الأرجل",[["Squat",4,"6-8"],["Romanian Deadlift",3,"8-10"],["Leg Press",3,"10-12"],["Leg Curl",3,"10-12"],["Leg Extension",3,"12-15"],["Standing Calf Raise",4,"15-20"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Rear Delt Machine",3,"12-15"]]]]},{id:"optional",name:"اختياري",subtitle:"ظهر + ذراع + سواعد",groups:[["الظهر",[["Chest Supported Row",3,"8-12"],["Single Arm Lat Pulldown",3,"10-12"],["Straight Arm Pulldown",3,"12-15"]]],["الذراع",[["Hammer Curl",3,"10-12"],["Cable Curl",3,"10-12"],["Pushdown",3,"10-12"],["Overhead Extension",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]}];
 
 const OLD_KEY="albatil-fitness-v1",KEY="albatil-fitness-v2";
-const BLANK_PROFILE_DATA=()=>({name:"محمد",profile:{weight:80.5,goal:75,fat:27.2,height:175,age:25,gender:"male",activity:1.55},history:[],measurements:[],prs:{},draft:null,exerciseLogs:{},nutrition:{logs:[],customFoods:[],targets:{calories:2200,protein:150,carb:220,fat:70}},mesocycle:{week:1,startedAt:new Date().toISOString()}});
+function getWorkouts(){return cur().customWorkouts||WORKOUTS}
+const BLANK_PROFILE_DATA=()=>({name:"محمد",profile:{weight:80.5,goal:75,fat:27.2,height:175,age:25,gender:"male",activity:1.55},history:[],measurements:[],prs:{},draft:null,exerciseLogs:{},nutrition:{logs:[],customFoods:[],targets:{calories:2200,protein:150,carb:220,fat:70}},mesocycle:{week:1,startedAt:new Date().toISOString()},customWorkouts:null,videoLinks:{},dailyBurn:{}});
 
 function migrateOld(){
   try{
@@ -637,6 +701,7 @@ function refreshProgressTabs(){
   renderStrengthChart();
   renderCalendar();
   renderAnalytics();
+  renderAchievements();
 }
 
 function refreshDashboard(){
@@ -647,8 +712,8 @@ function refreshDashboard(){
   const start=p.weight>p.goal?Math.max(p.weight,80.5):p.weight,total=Math.max(.1,Math.abs(start-p.goal)),done=Math.max(0,Math.abs(start-p.weight)),percent=Math.min(100,Math.round((c.history.length?done/total*100:0)));
   $('#goalPercent').textContent=percent+'%';$('#goalRing').style.setProperty('--p',percent);
   const todayIndex=new Date().getDay()%3;
-  $('#todayWorkoutName').textContent=WORKOUTS[todayIndex].name;
-  $('#startTodayBtn').onclick=()=>openWorkout(WORKOUTS[todayIndex].id);
+  $('#todayWorkoutName').textContent=getWorkouts()[todayIndex%getWorkouts().length].name;
+  $('#startTodayBtn').onclick=()=>openWorkout(getWorkouts()[todayIndex%getWorkouts().length].id);
   const last=c.history.at(-1);
   $('#lastWorkoutDate').textContent=last?new Date(last.date).toLocaleDateString('ar-SA'):'لا يوجد بعد';
   $('#lastWorkoutName').textContent=last?.name||'—';
@@ -680,7 +745,7 @@ function paintResumeBanner(){
   const b=$('#resumeBanner');
   const draft=cur().draft;
   if(draft){
-    const w=WORKOUTS.find(x=>x.id===draft.id);
+    const w=getWorkouts().find(x=>x.id===draft.id);
     b.classList.add('show');
     $('#resumeText').textContent=w?`${w.name} · ${new Date(draft.date).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
     $('#resumeBtn').onclick=()=>openWorkout(draft.id,true);
@@ -688,7 +753,7 @@ function paintResumeBanner(){
 }
 
 function renderDays(){
-  $('#workoutDays').innerHTML=WORKOUTS.map((w,i)=>{
+  $('#workoutDays').innerHTML=getWorkouts().map((w,i)=>{
     const exCount=w.groups.reduce((a,[,exs])=>a+exs.length,0);
     return `<button class="day-card" data-id="${w.id}"><div><h3>${w.name}</h3><p>${w.subtitle} · ${exCount} تمارين</p></div><div class="day-badge">${i+1}</div></button>`;
   }).join('');
@@ -700,19 +765,32 @@ $('#backFromLibrary').onclick=()=>showScreen('workouts');
 
 function renderLibrary(){
   let html='';
-  WORKOUTS.forEach(w=>{
+  getWorkouts().forEach(w=>{
     html+=`<div class="section-title" style="margin:18px 2px 8px"><h3>${w.name}</h3><span>${w.subtitle}</span></div>`;
     w.groups.forEach(([g,exs])=>{
       exs.forEach(([name,sets,reps])=>{
         const info=EX_INFO[name];
+        const vid=cur().videoLinks?.[name];
         html+=`<article class="exercise-card">
           <div class="exercise-head"><div><h3>${name}</h3><small>${g} · ${sets}×${reps}</small></div></div>
           ${info?`<div class="ex-detail show"><b>💡 نصيحة:</b> ${info.tip}${info.alt&&info.alt.length?`<br><b>🔁 بدائل:</b> ${info.alt.join('، ')}`:''}</div>`:'<div class="ex-detail show">لا توجد ملاحظات إضافية لهذا التمرين بعد.</div>'}
+          <div class="ex-meta-row">
+            ${vid?`<a href="${vid}" target="_blank" class="ex-tag">▶️ مشاهدة الشرح</a>`:''}
+            <button type="button" class="ex-toggle" data-add-video="${name}">${vid?'✏️ تعديل الرابط':'🎬 أضف رابط شرح'}</button>
+          </div>
         </article>`;
       });
     });
   });
   $('#libraryList').innerHTML=html;
+  $$('[data-add-video]').forEach(b=>b.onclick=()=>{
+    const name=b.dataset.addVideo;
+    const url=prompt('رابط فيديو الشرح (يوتيوب مثلًا):',cur().videoLinks?.[name]||'');
+    if(url===null)return;
+    if(!cur().videoLinks)cur().videoLinks={};
+    if(url.trim())cur().videoLinks[name]=url.trim();else delete cur().videoLinks[name];
+    save();renderLibrary();
+  });
 }
 
 function getProgramWeek(){return cur().mesocycle?.week||1}
@@ -740,7 +818,7 @@ function suggestedWeight(key,repsRange){
 }
 
 function openWorkout(id,resume){
-  currentWorkout=WORKOUTS.find(w=>w.id===id);
+  currentWorkout=getWorkouts().find(w=>w.id===id);
   $('#sessionTitle').textContent=currentWorkout.name;
   $('#sessionSubtitle').textContent=currentWorkout.subtitle+(isDeloadWeek()?' · 🔄 أسبوع تخفيف':'');
 
@@ -884,7 +962,7 @@ function startTimer(){
   timerId=setInterval(()=>{
     timer--;paintTimer();
     if(timer<=0){
-      clearInterval(timerId);navigator.vibrate?.([150,80,150]);toast('انتهت الراحة 🔥');
+      clearInterval(timerId);navigator.vibrate?.([150,80,150]);toast('انتهت الراحة 🔥');playBeep();
       if(notifEnabled&&document.hidden&&'Notification'in window&&Notification.permission==='granted'){
         new Notification('انتهت الراحة 🔥',{body:'وقت الجولة الجاية يا بطل',icon:'icon.svg'});
       }
@@ -944,6 +1022,26 @@ function renderProgress(){
   $('#prList').innerHTML=prs.map(([k,v])=>`<div class="history-item"><div><b>${k.split('__')[1]}</b><br><small>${new Date(v.date).toLocaleDateString('ar-SA')}</small></div><b>${v.weight} × ${v.reps}</b></div>`).join('')||'<div class="history-item"><small>لا توجد أرقام قياسية بعد</small></div>';
 }
 
+const ACHIEVEMENTS=[
+  {id:'first_workout',icon:'🥇',name:'أول حصة',desc:'أكملت أول تمرين',check:c=>c.history.length>=1},
+  {id:'ten_workouts',icon:'🏋️',name:'10 حصص',desc:'أكملت 10 تمارين',check:c=>c.history.length>=10},
+  {id:'fifty_workouts',icon:'💪',name:'50 حصة',desc:'أكملت 50 تمرين',check:c=>c.history.length>=50},
+  {id:'first_pr',icon:'🏆',name:'أول رقم قياسي',desc:'سجّلت أول PR',check:c=>Object.keys(c.prs).length>=1},
+  {id:'streak_7',icon:'🔥',name:'التزام أسبوع',desc:'7 أيام متتالية',check:()=>computeStreak()>=7},
+  {id:'streak_30',icon:'🌟',name:'التزام شهر',desc:'30 يوم متتالي',check:()=>computeStreak()>=30},
+  {id:'nutrition_7',icon:'🍽️',name:'تغذية منتظمة',desc:'سجّلت وجبات 7 أيام مختلفة',check:c=>new Set(c.nutrition.logs.map(l=>l.date)).size>=7},
+  {id:'measure_5',icon:'📏',name:'متابع مقاييس',desc:'5 قياسات جسم',check:c=>c.measurements.length>=5}
+];
+function renderAchievements(){
+  const c=cur();
+  const unlocked=ACHIEVEMENTS.filter(a=>a.check(c));
+  $('#achvCount').textContent=`${unlocked.length} / ${ACHIEVEMENTS.length}`;
+  $('#achvGrid').innerHTML=ACHIEVEMENTS.map(a=>{
+    const on=a.check(c);
+    return `<div class="achv-card${on?' unlocked':''}"><span>${a.icon}</span><b>${a.name}</b><small>${a.desc}</small></div>`;
+  }).join('');
+}
+
 function buildLineChart(points,{unit='',color='var(--accent)'}={}){
   if(points.length<2)return '<div class="chart-empty">تحتاج قياسين على الأقل عشان يظهر الرسم البياني</div>';
   const w=300,h=140,padX=10,padY=18;
@@ -998,13 +1096,13 @@ function renderWeightForecast(){
 
 function allExerciseKeys(){
   const keys=[];
-  WORKOUTS.forEach(w=>w.groups.forEach(([,exs])=>exs.forEach(([name])=>keys.push(w.id+'__'+name))));
+  getWorkouts().forEach(w=>w.groups.forEach(([,exs])=>exs.forEach(([name])=>keys.push(w.id+'__'+name))));
   return keys;
 }
 function exerciseLabel(key){return key.split('__')[1]}
 function keyMuscleMap(){
   const map={};
-  WORKOUTS.forEach(w=>w.groups.forEach(([g,exs])=>exs.forEach(([name])=>{map[w.id+'__'+name]=g})));
+  getWorkouts().forEach(w=>w.groups.forEach(([g,exs])=>exs.forEach(([name])=>{map[w.id+'__'+name]=g})));
   return map;
 }
 
@@ -1196,7 +1294,8 @@ function renderNutritionDay(){
   const dayLogs=cur().nutrition.logs.filter(l=>l.date===k);
   const totals=dayLogs.reduce((a,l)=>({cal:a.cal+l.cal,protein:a.protein+l.protein,carb:a.carb+l.carb,fat:a.fat+l.fat}),{cal:0,protein:0,carb:0,fat:0});
   const t=cur().nutrition.targets;
-  const calPct=Math.min(100,Math.round(totals.cal/Math.max(1,t.calories)*100));
+  const extra=todayBurn().burn||0;
+  const calPct=Math.min(100,Math.round(totals.cal/Math.max(1,t.calories+extra)*100));
   $('#calRing').style.setProperty('--p',calPct);
   $('#calRingText').textContent=Math.round(totals.cal);
   $('#proteinBar').style.width=Math.min(100,Math.round(totals.protein/Math.max(1,t.protein)*100))+'%';
@@ -1252,6 +1351,7 @@ function fillSettings(){
   $('#nameInput').value=cur().name;$('#settingsWeight').value=p.weight;$('#settingsGoal').value=p.goal;$('#settingsFat').value=p.fat;
   $('#settingsHeight').value=p.height||'';$('#settingsAge').value=p.age||'';
   $('#settingsGender').value=p.gender||'male';$('#settingsActivity').value=p.activity||1.55;
+  const tb=todayBurn();$('#dailySteps').value=tb.steps||'';$('#dailyBurnInput').value=tb.burn||'';
 }
 $('#settingsForm').onsubmit=e=>{
   e.preventDefault();
@@ -1298,7 +1398,7 @@ $('#profileChipBtn').onclick=()=>showScreen('settings');
 
 function fullRepaint(){
   renderDays();renderProgress();fillSettings();refreshDashboard();renderWeightChart();
-  populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();renderProgramWeekUI();
+  populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();renderProgramWeekUI();renderAchievements();
   fillNutritionTargets();renderNutritionDay();showScreen('home');
 }
 
@@ -1307,6 +1407,147 @@ $('#notifBtn').onclick=async()=>{
   const perm=await Notification.requestPermission();
   notifEnabled=perm==='granted';
   toast(notifEnabled?'تم تفعيل الإشعارات 🔔':'تم رفض الإذن');
+};
+
+// ===== Theme =====
+function applyTheme(t){document.documentElement.dataset.theme=t;localStorage.setItem('albatil-theme',t)}
+applyTheme(localStorage.getItem('albatil-theme')||'dark');
+$('#themeToggleBtn').onclick=()=>{
+  const next=document.documentElement.dataset.theme==='light'?'dark':'light';
+  applyTheme(next);
+};
+
+// ===== Audio beep for rest timer =====
+function playBeep(){
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='sine';o.frequency.value=880;
+    o.connect(g);g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.001,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3,ctx.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+    o.start();o.stop(ctx.currentTime+0.42);
+  }catch{}
+}
+
+// ===== Daily manual steps / calories burned =====
+function todayBurn(){return cur().dailyBurn?.[dateKey(new Date())]||{steps:0,burn:0}}
+$('#saveDailyBurnBtn').onclick=()=>{
+  if(!cur().dailyBurn)cur().dailyBurn={};
+  cur().dailyBurn[dateKey(new Date())]={steps:+$('#dailySteps').value||0,burn:+$('#dailyBurnInput').value||0};
+  save();toast('تم الحفظ');
+};
+
+// ===== Share progress snapshot (read-only HTML for trainer) =====
+$('#shareTrainerBtn').onclick=()=>{
+  const c=cur();
+  const last5=c.history.slice(-5).reverse();
+  const prs=Object.entries(c.prs).slice(0,10);
+  const html=`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تقرير ${c.name}</title>
+  <body style="font-family:Tajawal,system-ui,sans-serif;background:#0a0f14;color:#f2f5f9;padding:24px;max-width:640px;margin:auto">
+  <h1>تقرير تقدم — ${c.name}</h1>
+  <p>الوزن الحالي: ${c.profile.weight} كجم · الهدف: ${c.profile.goal} كجم · نسبة الدهون: ${c.profile.fat}%</p>
+  <p>عدد التمارين الكلي: ${c.history.length} · الالتزام الحالي: ${computeStreak()} يوم</p>
+  <h2>آخر الحصص</h2>
+  <ul>${last5.map(h=>`<li>${new Date(h.date).toLocaleDateString('ar-SA')} — ${h.name} — ${h.sets} جولة — حجم ${Math.round(h.volume)} كجم</li>`).join('')||'<li>لا يوجد بعد</li>'}</ul>
+  <h2>أفضل الأرقام (PR)</h2>
+  <ul>${prs.map(([k,v])=>`<li>${k.split('__')[1]}: ${v.weight} × ${v.reps}</li>`).join('')||'<li>لا يوجد بعد</li>'}</ul>
+  <p style="color:#8b96ad;font-size:12px">تم إنشاؤه من تطبيق Albatil Fitness بتاريخ ${new Date().toLocaleDateString('ar-SA')}</p>
+  </body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`albatil-report-${dateKey(new Date())}.html`;a.click();URL.revokeObjectURL(a.href);
+  toast('تم تصدير الملخص 📤');
+};
+
+// ===== Printable weekly/monthly report =====
+$('#exportReportBtn').onclick=()=>{
+  const c=cur();
+  const now=Date.now(),weekAgo=now-7*86400000,monthAgo=now-30*86400000;
+  const weekH=c.history.filter(x=>new Date(x.date).getTime()>=weekAgo);
+  const monthH=c.history.filter(x=>new Date(x.date).getTime()>=monthAgo);
+  $('#printReport').innerHTML=`
+    <div style="font-family:Tajawal,system-ui,sans-serif;direction:rtl">
+      <h1>تقرير ${c.name} — ${new Date().toLocaleDateString('ar-SA')}</h1>
+      <p>الوزن: ${c.profile.weight} كجم · الهدف: ${c.profile.goal} كجم · الالتزام: ${computeStreak()} يوم</p>
+      <h2>آخر 7 أيام</h2>
+      <p>عدد الحصص: ${weekH.length} · إجمالي الحجم: ${Math.round(weekH.reduce((a,x)=>a+x.volume,0))} كجم</p>
+      <h2>آخر 30 يوم</h2>
+      <p>عدد الحصص: ${monthH.length} · إجمالي الحجم: ${Math.round(monthH.reduce((a,x)=>a+x.volume,0))} كجم</p>
+      <h2>أفضل الأرقام</h2>
+      <ul>${Object.entries(c.prs).map(([k,v])=>`<li>${k.split('__')[1]}: ${v.weight}×${v.reps}</li>`).join('')||'<li>لا يوجد</li>'}</ul>
+    </div>`;
+  window.print();
+};
+
+// ===== Custom schedule editor =====
+function renderScheduleEditor(){
+  const days=getWorkouts();
+  $('#scheduleEditorList').innerHTML=days.map((w,di)=>`
+    <div class="schedule-day" data-di="${di}">
+      <div class="schedule-day-head">
+        <input class="day-name" value="${w.name}">
+        <button class="danger-lite" data-del-day="${di}">حذف اليوم</button>
+      </div>
+      <div class="ex-rows">${w.groups.flatMap(([g,exs])=>exs.map((e,ei)=>({g,e,ei}))).map((row,flatI)=>`
+        <div class="schedule-ex-row" data-flat="${flatI}"><input class="ex-name" value="${row.e[0]}"><input class="ex-sets" type="number" value="${row.e[1]}"><input class="ex-reps" value="${row.e[2]}"><button data-del-ex="${flatI}">×</button></div>
+      `).join('')}</div>
+      <button class="add-set-btn" data-add-ex="${di}">+ إضافة تمرين</button>
+    </div>
+  `).join('');
+  $$('.day-name').forEach((inp,di)=>inp.onchange=()=>{ensureCustom();getWorkouts()[di].name=inp.value;save()});
+  $$('[data-del-day]').forEach(b=>b.onclick=()=>{
+    if(!confirm('حذف هذا اليوم بالكامل؟'))return;
+    ensureCustom();getWorkouts().splice(+b.dataset.delDay,1);save();renderScheduleEditor();renderDays();
+  });
+  $$('[data-add-ex]').forEach(b=>b.onclick=()=>{
+    ensureCustom();
+    const w=getWorkouts()[+b.dataset.addEx];
+    if(!w.groups.length)w.groups.push(['عام',[]]);
+    w.groups[0][1].push(['تمرين جديد',3,'8-12']);
+    save();renderScheduleEditor();renderDays();
+  });
+  $$('.schedule-day').forEach(dayEl=>{
+    const di=+dayEl.dataset.di;
+    $$('.schedule-ex-row',dayEl).forEach(row=>{
+      const flatI=+row.dataset.flat;
+      row.querySelector('.ex-name').onchange=e=>updateExField(di,flatI,0,e.target.value);
+      row.querySelector('.ex-sets').onchange=e=>updateExField(di,flatI,1,+e.target.value||3);
+      row.querySelector('.ex-reps').onchange=e=>updateExField(di,flatI,2,e.target.value);
+      row.querySelector('[data-del-ex]').onclick=()=>{ensureCustom();removeExField(di,flatI);save();renderScheduleEditor();renderDays()};
+    });
+  });
+}
+function ensureCustom(){if(!cur().customWorkouts)cur().customWorkouts=JSON.parse(JSON.stringify(WORKOUTS))}
+function flatExercises(w){return w.groups.flatMap(([g,exs])=>exs.map(e=>({g,e})))}
+function updateExField(di,flatI,fieldIdx,val){
+  ensureCustom();
+  const w=getWorkouts()[di];
+  const flat=flatExercises(w);
+  const target=flat[flatI];
+  target.e[fieldIdx]=val;
+  save();
+}
+function removeExField(di,flatI){
+  const w=getWorkouts()[di];
+  const flat=flatExercises(w);
+  const target=flat[flatI];
+  w.groups.forEach(([g,exs])=>{
+    const idx=exs.indexOf(target.e);
+    if(idx>-1)exs.splice(idx,1);
+  });
+}
+$('#openEditScheduleBtn').onclick=()=>{renderScheduleEditor();showScreen('editSchedule')};
+$('#backFromEditSchedule').onclick=()=>showScreen('workouts');
+$('#addScheduleDayBtn').onclick=()=>{
+  ensureCustom();
+  getWorkouts().push({id:'custom_'+Date.now(),name:'يوم جديد',subtitle:'خصّص التمارين',groups:[['عام',[]]]});
+  save();renderScheduleEditor();renderDays();
+};
+$('#resetScheduleBtn').onclick=()=>{
+  if(!confirm('استرجاع الجدول الافتراضي وإلغاء كل تعديلاتك؟'))return;
+  cur().customWorkouts=null;save();renderScheduleEditor();renderDays();toast('تم الاسترجاع');
 };
 
 $('#exportBtn').onclick=()=>{
@@ -1376,7 +1617,13 @@ $('#cloudPullBtn').onclick=async()=>{
 };
 initCloudSync();
 
-renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();renderWeightChart();populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();renderProgramWeekUI();fillNutritionTargets();renderNutritionDay();
+renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();renderWeightChart();populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();renderProgramWeekUI();renderAchievements();fillNutritionTargets();renderNutritionDay();
+
+const urlParams=new URLSearchParams(location.search);
+if(urlParams.get('start')==='workout'){
+  const idx=new Date().getDay()%3;
+  setTimeout(()=>openWorkout(getWorkouts()[idx%getWorkouts().length].id),50);
+}
 </script>
 </body>
 </html>
