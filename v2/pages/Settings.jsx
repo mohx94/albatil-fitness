@@ -1,0 +1,203 @@
+window.AF = window.AF || {};
+
+AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, cloudReason, theme, setTheme, notifEnabled, setNotifEnabled}){
+  const c = cur();
+  const [settingsForm, setSettingsForm] = React.useState({
+    name:c.name, weight:c.profile.weight, goal:c.profile.goal, fat:c.profile.fat,
+    height:c.profile.height||'', age:c.profile.age||'', gender:c.profile.gender||'male', activity:c.profile.activity||1.55
+  });
+  const [targets, setTargets] = React.useState(c.nutrition.targets);
+  const today = AF.dateKey(new Date());
+  const tb = c.dailyBurn?.[today] || {steps:0,burn:0};
+  const [burnForm, setBurnForm] = React.useState({steps:tb.steps||'', burn:tb.burn||''});
+  const fileRef = React.useRef(null);
+
+  const saveSettings = (e)=>{
+    e.preventDefault();
+    mutate((next,p)=>{
+      p.name = settingsForm.name||'محمد';
+      p.profile = {weight:+settingsForm.weight||80.5, goal:+settingsForm.goal||75, fat:+settingsForm.fat||27.2,
+        height:+settingsForm.height||175, age:+settingsForm.age||25, gender:settingsForm.gender, activity:+settingsForm.activity};
+    });
+    toast('تم حفظ الإعدادات');
+  };
+
+  const calcAutoTargets = ()=>{
+    const calc = AF.calcTargets({...c.profile, weight:+settingsForm.weight||c.profile.weight, goal:+settingsForm.goal||c.profile.goal});
+    if(!calc){ toast('أدخل الطول والعمر أولًا'); return; }
+    setTargets(calc);
+    toast('تم احتساب الأهداف — راجعها واحفظ');
+  };
+  const saveTargets = (e)=>{
+    e.preventDefault();
+    mutate((next,p)=>{ p.nutrition.targets = {
+      calories:+targets.calories||2200, protein:+targets.protein||150, carb:+targets.carb||220, fat:+targets.fat||70
+    };});
+    toast('تم حفظ أهداف التغذية');
+  };
+
+  const saveBurn = ()=>{
+    mutate((next,p)=>{
+      if(!p.dailyBurn) p.dailyBurn={};
+      p.dailyBurn[today] = {steps:+burnForm.steps||0, burn:+burnForm.burn||0};
+    });
+    toast('تم الحفظ');
+  };
+
+  const switchProfile = (id)=>{
+    setState(prev=>{ const next={...prev, activeProfile:id}; AF.saveState(next); return next; });
+    toast('تم تبديل الملف الشخصي');
+  };
+  const deleteProfile = (id)=>{
+    if(!confirm('حذف هذا الملف الشخصي نهائيًا؟')) return;
+    setState(prev=>{
+      const profiles = {...prev.profiles}; delete profiles[id];
+      const activeProfile = prev.activeProfile===id ? Object.keys(profiles)[0] : prev.activeProfile;
+      const next = {...prev, profiles, activeProfile}; AF.saveState(next); return next;
+    });
+    toast('تم حذف الملف');
+  };
+  const addProfile = ()=>{
+    const name = prompt('اسم الملف الشخصي الجديد؟');
+    if(!name) return;
+    const id = 'p'+Date.now();
+    setState(prev=>{
+      const profiles = {...prev.profiles, [id]:AF.blankProfileData()};
+      profiles[id].name = name;
+      const next = {...prev, profiles, activeProfile:id}; AF.saveState(next); return next;
+    });
+    toast('تم إنشاء الملف الشخصي');
+  };
+
+  const doExport = ()=>{
+    const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download='albatil-fitness-backup.json'; a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  const doImport = async (e)=>{
+    try{
+      const parsed = JSON.parse(await e.target.files[0].text());
+      const next = parsed.profiles ? parsed : {activeProfile:'p1', profiles:{p1:parsed}};
+      setState(next); AF.saveState(next);
+      toast('تم استيراد البيانات');
+    }catch{ toast('ملف غير صالح'); }
+  };
+
+  const shareTrainer = ()=>{
+    const last5 = c.history.slice(-5).reverse();
+    const prs = Object.entries(c.prs).slice(0,10);
+    const html = `<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تقرير ${c.name}</title>
+    <body style="font-family:Tajawal,system-ui,sans-serif;background:#0a0f14;color:#f2f5f9;padding:24px;max-width:640px;margin:auto">
+    <h1>تقرير تقدم — ${c.name}</h1>
+    <p>الوزن الحالي: ${c.profile.weight} كجم · الهدف: ${c.profile.goal} كجم · نسبة الدهون: ${c.profile.fat}%</p>
+    <p>عدد التمارين الكلي: ${c.history.length} · الالتزام الحالي: ${AF.computeStreak(c.history)} يوم</p>
+    <h2>آخر الحصص</h2>
+    <ul>${last5.map(hh=>`<li>${new Date(hh.date).toLocaleDateString('ar-SA')} — ${hh.name} — ${hh.sets} جولة — حجم ${Math.round(hh.volume)} كجم</li>`).join('')||'<li>لا يوجد بعد</li>'}</ul>
+    <h2>أفضل الأرقام (PR)</h2>
+    <ul>${prs.map(([k,v])=>`<li>${k.split('__')[1]}: ${v.weight} × ${v.reps}</li>`).join('')||'<li>لا يوجد بعد</li>'}</ul>
+    <p style="color:#8b96ad;font-size:12px">تم إنشاؤه من تطبيق Albatil Fitness بتاريخ ${new Date().toLocaleDateString('ar-SA')}</p>
+    </body></html>`;
+    const blob = new Blob([html],{type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `albatil-report-${today}.html`; a.click();
+    URL.revokeObjectURL(a.href);
+    toast('تم تصدير الملخص 📤');
+  };
+
+  const requestNotif = async ()=>{
+    if(!('Notification' in window)){ toast('الإشعارات غير مدعومة بهذا المتصفح'); return; }
+    const perm = await Notification.requestPermission();
+    setNotifEnabled(perm==='granted');
+    toast(perm==='granted' ? 'تم تفعيل الإشعارات 🔔' : 'تم رفض الإذن');
+  };
+
+  return h(React.Fragment, null,
+    h('div',{style:{margin:'14px 0 18px'}}, h('p',{style:{color:'var(--muted)',margin:0}},'بياناتك داخل جهازك (ومزامنة سحابية اختيارية)'), h('h2',{style:{margin:0}},'الإعدادات')),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'الملفات الشخصية', right:'تعدد المستخدمين'}),
+      h('div',{style:{display:'grid',gap:8,marginTop:12}},
+        Object.entries(state.profiles).map(([id,pr])=>{
+          const active = id===state.activeProfile;
+          return h('div',{key:id, style:{display:'flex',alignItems:'center',justifyContent:'space-between',background:'var(--surface2)',border:'1px solid '+(active?'var(--accent)':'var(--line)'),borderRadius:14,padding:'10px 14px'}},
+            h('span',null, pr.name||'ملف'),
+            h('div',{style:{display:'flex',gap:6}},
+              !active ? h('button',{onClick:()=>switchProfile(id), style:{border:0,background:'transparent',fontSize:16,cursor:'pointer'}},'✅') : null,
+              Object.keys(state.profiles).length>1 ? h('button',{onClick:()=>deleteProfile(id), style:{border:0,background:'transparent',fontSize:16,cursor:'pointer'}},'🗑') : null
+            )
+          );
+        })
+      ),
+      h(AF.SecondaryBtn,{onClick:addProfile, style:{width:'100%',marginTop:12}}, '+ ملف شخصي جديد')
+    ),
+
+    h('form',{onSubmit:saveSettings, style:{background:'linear-gradient(145deg, var(--surface), #0c121c)',border:'1px solid var(--line)',borderRadius:22,boxShadow:'var(--shadow)',padding:18,marginTop:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'اسمك', h('input',{value:settingsForm.name, onChange:e=>setSettingsForm(f=>({...f,name:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'الوزن الحالي', h('input',{type:'number', step:'0.1', value:settingsForm.weight, onChange:e=>setSettingsForm(f=>({...f,weight:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'وزن الهدف', h('input',{type:'number', step:'0.1', value:settingsForm.goal, onChange:e=>setSettingsForm(f=>({...f,goal:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'نسبة الدهون', h('input',{type:'number', step:'0.1', value:settingsForm.fat, onChange:e=>setSettingsForm(f=>({...f,fat:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'الطول (سم)', h('input',{type:'number', step:'0.1', value:settingsForm.height, onChange:e=>setSettingsForm(f=>({...f,height:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'العمر', h('input',{type:'number', value:settingsForm.age, onChange:e=>setSettingsForm(f=>({...f,age:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'الجنس', h('select',{value:settingsForm.gender, onChange:e=>setSettingsForm(f=>({...f,gender:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}, h('option',{value:'male'},'ذكر'), h('option',{value:'female'},'أنثى'))),
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'مستوى النشاط', h('select',{value:settingsForm.activity, onChange:e=>setSettingsForm(f=>({...f,activity:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}},
+        h('option',{value:1.2},'قليل الحركة'), h('option',{value:1.375},'نشاط خفيف'), h('option',{value:1.55},'نشاط متوسط'), h('option',{value:1.725},'نشاط عالي'))),
+      h(AF.PrimaryBtn,{type:'submit', style:{gridColumn:'1/-1'}}, 'حفظ الإعدادات')
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'أهداف التغذية اليومية'}),
+      h(AF.SecondaryBtn,{onClick:calcAutoTargets, style:{width:'100%',marginBottom:12}}, '🧮 احسب الأهداف تلقائيًا من بياناتي'),
+      h('form',{onSubmit:saveTargets, style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        [['calories','السعرات'],['protein','بروتين (جم)'],['carb','كارب (جم)'],['fat','دهون (جم)']].map(([f,label])=>
+          h('label',{key:f, style:{fontSize:12,color:'var(--muted)'}}, label,
+            h('input',{type:'number', value:targets[f], onChange:e=>setTargets(t=>({...t,[f]:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
+        ),
+        h(AF.PrimaryBtn,{type:'submit', style:{gridColumn:'1/-1'}}, 'حفظ الأهداف')
+      )
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'المظهر'}),
+      h(AF.SecondaryBtn,{onClick:()=>setTheme(theme==='light'?'dark':'light'), style:{width:'100%'}}, '🌗 تبديل الوضع (داكن/فاتح)')
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'خطوات النشاط اليومية', right:'يدويًا'}),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'الخطوات', h('input',{type:'number', value:burnForm.steps, onChange:e=>setBurnForm(f=>({...f,steps:e.target.value})), placeholder:'0', style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'سعرات محروقة إضافية', h('input',{type:'number', value:burnForm.burn, onChange:e=>setBurnForm(f=>({...f,burn:e.target.value})), placeholder:'0', style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
+      ),
+      h(AF.SecondaryBtn,{onClick:saveBurn, style:{width:'100%',marginTop:10}}, 'حفظ'),
+      h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}},
+        '⚠️ مزامنة تلقائية حقيقية مع Huawei Health / Google Fit / Apple Health مو ممكنة من تطبيق ويب عادي — تتطلب تطبيق جوّال أصلي (Native) مرتبط بحسابها رسميًا. لحين ذاك انسخ الخطوات/السعرات المحروقة يدويًا وبنضيفها لميزانية سعراتك.'
+      )
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'مشاركة مع المدرّب'}),
+      h(AF.SecondaryBtn,{onClick:shareTrainer, style:{width:'100%'}}, '📤 تصدير ملخص تقدم (HTML)')
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'الإشعارات'}),
+      h(AF.SecondaryBtn,{onClick:requestNotif, style:{width:'100%'}}, '🔔 تفعيل تنبيه انتهاء الراحة')
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'المزامنة السحابية', right: cloudUser ? `متصل: ${cloudUser.displayName||cloudUser.email}` : (cloudReason==='no-config' ? '🔧 غير مُعد' : 'غير متصل')}),
+      h(AF.SecondaryBtn,{onClick:()=>cloudUser?AF.cloudSignOut():AF.cloudSignIn().catch(()=>toast('تعذر تسجيل الدخول')), style:{width:'100%',marginBottom:10}}, cloudUser?'تسجيل الخروج':'تسجيل الدخول بجوجل'),
+      cloudUser ? h('div',{style:{display:'flex',gap:10,flexWrap:'wrap'}},
+        h(AF.SecondaryBtn,{onClick:()=>AF.cloudPush(state).then(()=>toast('تم رفع بياناتك ☁️')).catch(()=>toast('تعذر الرفع'))}, '⬆️ رفع بياناتي للسحابة'),
+        h(AF.SecondaryBtn,{onClick:()=>{
+          if(!confirm('هذا راح يستبدل بياناتك الحالية بالنسخة السحابية، متأكد؟')) return;
+          AF.cloudPull().then(remote=>{ if(remote){ setState(remote); AF.saveState(remote); toast('تم سحب بياناتك ☁️'); } else toast('لا توجد بيانات محفوظة بعد'); }).catch(()=>toast('تعذر السحب'));
+        }}, '⬇️ سحب بياناتي من السحابة')
+      ) : null,
+      h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}},
+        'لتفعيل هذه الخاصية أنشئ مشروع Firebase مجاني وانسخ مفاتيحه بملف firebase-config.js — التفاصيل بملف README.'
+      )
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'النسخة الاحتياطية'}),
+      h('div',{style:{display:'flex',gap:10,flexWrap:'wrap'}},
+        h(AF.SecondaryBtn,{onClick:doExport}, 'تصدير البيانات'),
+        h('label',{style:{border:'1px solid var(--line)',borderRadius:14,padding:'13px 16px',fontWeight:800,background:'var(--surface2)',color:'var(--text)',cursor:'pointer',display:'inline-flex',alignItems:'center'}},
+          'استيراد', h('input',{type:'file', accept:'application/json', ref:fileRef, onChange:doImport, hidden:true}))
+      )
+    )
+  );
+};

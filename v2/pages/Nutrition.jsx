@@ -1,0 +1,177 @@
+window.AF = window.AF || {};
+
+AF.NutritionPage = function({cur, mutate, toast}){
+  const c = cur();
+  const [nutriDate, setNutriDate] = React.useState(new Date());
+  const [foodId, setFoodId] = React.useState(AF.FOODS[0].id);
+  const [qty, setQty] = React.useState(100);
+  const [barcode, setBarcode] = React.useState('');
+  const [scanning, setScanning] = React.useState(false);
+  const videoRef = React.useRef(null);
+  const streamRef = React.useRef(null);
+  const [newFood, setNewFood] = React.useState({name:'',barcode:'',cal:'',protein:'',carb:'',fat:''});
+
+  const allFoods = () => AF.FOODS.concat(c.nutrition.customFoods);
+  const findFood = (id) => allFoods().find(f=>f.id===id);
+  const k = AF.dateKey(nutriDate);
+  const today = AF.dateKey(new Date());
+  const dayLogs = c.nutrition.logs.filter(l=>l.date===k);
+  const totals = dayLogs.reduce((a,l)=>({cal:a.cal+l.cal, protein:a.protein+l.protein, carb:a.carb+l.carb, fat:a.fat+l.fat}), {cal:0,protein:0,carb:0,fat:0});
+  const t = c.nutrition.targets;
+  const extra = c.dailyBurn?.[today]?.burn || 0;
+  const calPct = Math.min(100, Math.round(totals.cal/Math.max(1,t.calories+extra)*100));
+
+  React.useEffect(()=>{
+    if(!barcode.trim()) return;
+    const match = c.nutrition.customFoods.find(f=>f.barcode===barcode.trim());
+    if(match){ setFoodId(match.id); toast('تم العثور على الصنف ✅'); }
+  },[barcode]);
+
+  const toggleScan = async ()=>{
+    if(!('BarcodeDetector' in window)){ toast('المسح بالكاميرا غير مدعوم بهذا المتصفح'); return; }
+    if(scanning){
+      streamRef.current?.getTracks().forEach(tr=>tr.stop());
+      streamRef.current=null; setScanning(false);
+      return;
+    }
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      streamRef.current = stream;
+      videoRef.current.srcObject = stream;
+      await videoRef.current.play();
+      setScanning(true);
+      const detector = new BarcodeDetector();
+      const loop = async ()=>{
+        if(!streamRef.current) return;
+        try{
+          const codes = await detector.detect(videoRef.current);
+          if(codes.length){
+            setBarcode(codes[0].rawValue);
+            toast('📷 تم قراءة الباركود: '+codes[0].rawValue);
+            streamRef.current.getTracks().forEach(tr=>tr.stop());
+            streamRef.current=null; setScanning(false);
+            return;
+          }
+        }catch{}
+        requestAnimationFrame(loop);
+      };
+      loop();
+    }catch{ toast('تعذر الوصول للكاميرا'); }
+  };
+
+  const addMeal = ()=>{
+    const food = findFood(foodId);
+    if(!food || !qty){ toast('اختر صنف وأدخل الكمية'); return; }
+    const ratio = qty/100;
+    mutate((next,p)=>{
+      p.nutrition.logs.push({date:k, foodId, name:food.name, qty:+qty,
+        cal:Math.round(food.cal*ratio), protein:+(food.protein*ratio).toFixed(1),
+        carb:+(food.carb*ratio).toFixed(1), fat:+(food.fat*ratio).toFixed(1)});
+    });
+    toast('تمت إضافة الوجبة 🍽️');
+  };
+
+  const addQuickMeal = (meal)=>{
+    mutate((next,p)=>{
+      meal.items.forEach(it=>{
+        const food = findFood(it.id); if(!food) return;
+        const ratio = it.qty/100;
+        p.nutrition.logs.push({date:k, foodId:it.id, name:food.name, qty:it.qty,
+          cal:Math.round(food.cal*ratio), protein:+(food.protein*ratio).toFixed(1),
+          carb:+(food.carb*ratio).toFixed(1), fat:+(food.fat*ratio).toFixed(1)});
+      });
+    });
+    toast(`تمت إضافة ${meal.name} 🍽️`);
+  };
+
+  const deleteMeal = (idxInDay)=>{
+    mutate((next,p)=>{
+      let count=-1;
+      p.nutrition.logs = p.nutrition.logs.filter(l=>{
+        if(l.date!==k) return true;
+        count++;
+        return count!==idxInDay;
+      });
+    });
+  };
+
+  const addFood = ()=>{
+    if(!newFood.name.trim() || !newFood.cal){ toast('أدخل الاسم والسعرات على الأقل'); return; }
+    const id = 'custom_'+Date.now();
+    mutate((next,p)=>{
+      p.nutrition.customFoods.push({id, name:newFood.name.trim(), cal:+newFood.cal||0,
+        protein:+newFood.protein||0, carb:+newFood.carb||0, fat:+newFood.fat||0, barcode:newFood.barcode.trim()||null});
+    });
+    setFoodId(id);
+    setNewFood({name:'',barcode:'',cal:'',protein:'',carb:'',fat:''});
+    toast('تم حفظ الصنف الجديد ✅');
+  };
+
+  return h(React.Fragment, null,
+    h('div',{style:{margin:'14px 0 18px'}}, h('p',{style:{color:'var(--muted)',margin:0}},'تابع أكلك اليومي'), h('h2',{style:{margin:0}},'التغذية')),
+    h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}},
+      h(AF.GhostBtn,{onClick:()=>setNutriDate(d=>{const n=new Date(d);n.setDate(n.getDate()-1);return n;})}, '‹'),
+      h('h3',{style:{margin:0}}, k===today?'اليوم':nutriDate.toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'numeric'})),
+      h(AF.GhostBtn,{onClick:()=>setNutriDate(d=>{const n=new Date(d);n.setDate(n.getDate()+1);return n;})}, '›')
+    ),
+
+    h(AF.Panel,{style:{display:'flex',alignItems:'center',gap:18}},
+      h(AF.RingChart,{percent:calPct, label:Math.round(totals.cal), sub:'سعرة'}),
+      h('div',{style:{flex:1,display:'grid',gap:10}},
+        [['protein','بروتين','var(--accent2)'],['carb','كارب','var(--gold)'],['fat','دهون','var(--danger)']].map(([f,label,color])=>
+          h('div',{key:f, style:{display:'grid',gridTemplateColumns:'52px 1fr auto',gap:8,alignItems:'center'}},
+            h('span',{style:{color:'var(--muted)',fontSize:12}},label),
+            h('div',{style:{height:8,borderRadius:99,background:'var(--surface2)',overflow:'hidden'}},
+              h('div',{style:{height:'100%',borderRadius:99,width:Math.min(100,Math.round(totals[f]/Math.max(1,t[f])*100))+'%',background:color,transition:'width .4s ease'}})
+            ),
+            h('b',{style:{fontSize:11,whiteSpace:'nowrap'}}, `${Math.round(totals[f])} / ${t[f]} جم`)
+          )
+        )
+      )
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'وجبات سريعة', right:'ضغطة وحدة'}),
+      h('div',{style:{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14}},
+        AF.QUICK_MEALS.map((m,i)=>h('button',{key:i, onClick:()=>addQuickMeal(m), style:{
+          background:'var(--surface2)',border:'1px solid var(--line)',color:'var(--text)',borderRadius:99,
+          padding:'9px 14px',fontSize:13,fontWeight:700,cursor:'pointer'
+        }}, m.name))
+      )
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'إضافة وجبة'}),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'بحث بالباركود (تجريبي)',
+          h('input',{value:barcode, onChange:e=>setBarcode(e.target.value), placeholder:'ادخل رقم الباركود المحفوظ', style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+        h('label',{style:{fontSize:12,color:'var(--muted)',alignSelf:'end'}},
+          h(AF.SecondaryBtn,{onClick:toggleScan, style:{width:'100%',marginTop:6}}, scanning?'⏹️ إيقاف المسح':'📷 مسح بالكاميرا')),
+        h('label',{style:{fontSize:12,color:'var(--muted)',gridColumn:'1/-1'}},'الصنف',
+          h('select',{value:foodId, onChange:e=>setFoodId(e.target.value), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}},
+            allFoods().map(f=>h('option',{key:f.id,value:f.id}, f.name)))),
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'الكمية (جم)',
+          h('input',{type:'number', value:qty, min:1, onChange:e=>setQty(e.target.value), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
+      ),
+      h('video',{ref:videoRef, muted:true, playsInline:true, style:{display:scanning?'block':'none',width:'100%',borderRadius:14,marginTop:10}}),
+      h(AF.PrimaryBtn,{onClick:addMeal, style:{width:'100%',marginTop:10}}, '+ إضافة للسجل')
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'سجل اليوم', right:dayLogs.length+' وجبات'}),
+      h('div',{style:{display:'grid',gap:8,marginTop:12}},
+        dayLogs.length ? dayLogs.map((l,i)=>h('div',{key:i, style:{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:14,padding:12}},
+          h('div',null, h('b',null,l.name), h('br'), h('small',{style:{color:'var(--muted)'}}, `${l.qty} جم · ${l.cal} سعرة`)),
+          h(AF.GhostBtn,{onClick:()=>deleteMeal(i)}, 'حذف')
+        )) : h('div',{style:{color:'var(--muted)',fontSize:13}}, 'لا توجد وجبات مسجلة اليوم')
+      )
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'إضافة صنف جديد لقاعدة البيانات'}),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        [['name','الاسم'],['barcode','باركود (اختياري)'],['cal','سعرات/100جم'],['protein','بروتين/100جم'],['carb','كارب/100جم'],['fat','دهون/100جم']].map(([f,label])=>
+          h('label',{key:f, style:{fontSize:12,color:'var(--muted)'}}, label,
+            h('input',{value:newFood[f], onChange:e=>setNewFood(prev=>({...prev,[f]:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
+        )
+      ),
+      h(AF.SecondaryBtn,{onClick:addFood, style:{width:'100%',marginTop:10}}, 'حفظ الصنف')
+    )
+  );
+};

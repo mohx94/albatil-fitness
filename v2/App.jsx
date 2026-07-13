@@ -1,0 +1,78 @@
+window.AF = window.AF || {};
+
+function playBeep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type='sine'; o.frequency.value=880;
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+    o.start(); o.stop(ctx.currentTime+0.42);
+  }catch{}
+}
+
+AF.App = function(){
+  const {state, cur, mutate, setState, cloudUser, cloudReason} = AF.useAppState();
+  const [screen, setScreen] = React.useState('home');
+  const [currentWorkoutId, setCurrentWorkoutId] = React.useState(null);
+  const [toastMsg, setToastMsg] = React.useState(null);
+  const [theme, setThemeState] = React.useState(()=>localStorage.getItem('albatil-theme')||'dark');
+  const [notifEnabled, setNotifEnabled] = React.useState(()=>('Notification' in window && Notification.permission==='granted'));
+
+  React.useEffect(()=>{ document.documentElement.dataset.theme = theme; localStorage.setItem('albatil-theme', theme); },[theme]);
+
+  const toast = React.useCallback((msg)=>{
+    setToastMsg(msg);
+    setTimeout(()=>setToastMsg(null), 1900);
+  },[]);
+
+  const getWorkouts = React.useCallback(()=>{
+    const c = cur();
+    return c.customWorkouts || AF.WORKOUTS;
+  },[state]);
+
+  const openWorkout = (id)=>{ setCurrentWorkoutId(id); setScreen('session'); };
+  const showScreen = (s)=>{ setScreen(s); window.scrollTo({top:0,behavior:'smooth'}); };
+
+  const advanceProgramWeek = ()=>{
+    mutate((next,p)=>{
+      if(!p.mesocycle) p.mesocycle={week:1,startedAt:new Date().toISOString()};
+      p.mesocycle.week = p.mesocycle.week>=4 ? 1 : p.mesocycle.week+1;
+    });
+  };
+
+  React.useEffect(()=>{
+    const params = new URLSearchParams(location.search);
+    if(params.get('start')==='workout'){
+      const idx = new Date().getDay()%3;
+      const workouts = cur().customWorkouts || AF.WORKOUTS;
+      openWorkout(workouts[idx % workouts.length].id);
+    }
+    // eslint-disable-next-line
+  },[]);
+
+  const c = cur();
+
+  let pageEl = null;
+  if(screen==='home') pageEl = h(AF.HomePage,{state,cur,mutate,getWorkouts,openWorkout,showScreen});
+  else if(screen==='workouts') pageEl = h(AF.WorkoutsPage,{cur,getWorkouts,openWorkout,showScreen,advanceProgramWeek});
+  else if(screen==='library') pageEl = h(AF.LibraryPage,{cur,mutate,getWorkouts,showScreen});
+  else if(screen==='editSchedule') pageEl = h(AF.ScheduleEditorPage,{cur,mutate,getWorkouts,showScreen});
+  else if(screen==='session') pageEl = h(AF.SessionPage,{cur,mutate,getWorkouts,currentWorkoutId,showScreen,playBeep,notifEnabled,toast});
+  else if(screen==='progress') pageEl = h(AF.ProgressPage,{cur,mutate,getWorkouts,toast});
+  else if(screen==='nutrition') pageEl = h(AF.NutritionPage,{cur,mutate,toast});
+  else if(screen==='settings') pageEl = h(AF.SettingsPage,{state,cur,mutate,setState,toast,cloudUser,cloudReason,theme,setTheme:setThemeState,notifEnabled,setNotifEnabled});
+
+  const navScreen = ['session','library','editSchedule'].includes(screen) ? null : screen;
+
+  return h('div',{style:{maxWidth:720,margin:'auto',minHeight:'100vh',padding:'18px 16px 96px'}},
+    h(AF.TopBar,{profileName:c.name||'الملف', onProfileClick:()=>showScreen('settings')}),
+    h('main',null, pageEl),
+    navScreen ? h(AF.BottomNav,{active:navScreen, onNav:showScreen}) : null,
+    h(AF.Toast,{msg:toastMsg})
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(AF.App));
