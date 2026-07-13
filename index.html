@@ -329,6 +329,12 @@ a:hover{color:var(--accent)}
           <label>الوزن<input id="weightInput" type="number" step="0.1" required></label>
           <label>نسبة الدهون<input id="fatInput" type="number" step="0.1"></label>
           <label>محيط الخصر<input id="waistInput" type="number" step="0.1"></label>
+          <label>محيط الرقبة<input id="neckInput" type="number" step="0.1"></label>
+          <label>محيط الصدر<input id="chestInput" type="number" step="0.1"></label>
+          <label>محيط الذراع (باي)<input id="armInput" type="number" step="0.1"></label>
+          <label>محيط الفخذ<input id="thighInput" type="number" step="0.1"></label>
+          <label>محيط الأرداف<input id="hipInput" type="number" step="0.1"></label>
+          <button type="button" class="secondary-btn" id="calcNavyFatBtn">🧮 احسب نسبة الدهون (البحرية الأمريكية)</button>
           <button class="primary-btn" type="submit">حفظ القياس</button>
         </form>
         <section class="panel">
@@ -1010,14 +1016,44 @@ $('#finishWorkoutBtn').onclick=()=>{
 
 $('#bodyForm').onsubmit=e=>{
   e.preventDefault();
-  const item={date:new Date().toISOString(),weight:+$('#weightInput').value,fat:+$('#fatInput').value||null,waist:+$('#waistInput').value||null};
+  const item={date:new Date().toISOString(),weight:+$('#weightInput').value,fat:+$('#fatInput').value||null,waist:+$('#waistInput').value||null,
+    neck:+$('#neckInput').value||null,chest:+$('#chestInput').value||null,arm:+$('#armInput').value||null,thigh:+$('#thighInput').value||null,hip:+$('#hipInput').value||null};
   cur().measurements.push(item);cur().profile.weight=item.weight;if(item.fat)cur().profile.fat=item.fat;
   save();renderProgress();e.target.reset();toast('تم حفظ القياس');
 };
 
+$('#calcNavyFatBtn').onclick=()=>{
+  const height=cur().profile.height;
+  const gender=cur().profile.gender||'male';
+  const waist=+$('#waistInput').value,neck=+$('#neckInput').value,hip=+$('#hipInput').value;
+  if(!height){toast('أدخل طولك بالإعدادات أولًا');return}
+  if(!waist||!neck){toast('أدخل محيط الخصر والرقبة على الأقل');return}
+  if(gender==='female'&&!hip){toast('أدخل محيط الأرداف للنساء');return}
+  let bf;
+  if(gender==='female'){
+    bf=495/(1.29579-0.35004*Math.log10(waist+hip-neck)+0.22100*Math.log10(height))-450;
+  } else {
+    bf=495/(1.0324-0.19077*Math.log10(waist-neck)+0.15456*Math.log10(height))-450;
+  }
+  bf=Math.max(2,Math.min(60,bf));
+  $('#fatInput').value=bf.toFixed(1);
+  toast(`🧮 نسبة الدهون التقريبية: ${bf.toFixed(1)}%`);
+};
+
 function renderProgress(){
   $('#progressCount').textContent=cur().measurements.length+' إدخال';
-  $('#progressList').innerHTML=cur().measurements.slice().reverse().slice(0,10).map(x=>`<div class="history-item"><div><b>${x.weight} كجم</b><br><small>${x.fat?x.fat+'% دهون':''} ${x.waist?'· خصر '+x.waist+' سم':''}</small></div><small>${new Date(x.date).toLocaleDateString('ar-SA')}</small></div>`).join('')||'<div class="history-item"><small>لا توجد قياسات بعد</small></div>';
+  $('#progressList').innerHTML=cur().measurements.slice().reverse().slice(0,10).map(x=>{
+    const extras=[
+      x.fat?x.fat+'% دهون':'',
+      x.waist?'خصر '+x.waist:'',
+      x.neck?'رقبة '+x.neck:'',
+      x.chest?'صدر '+x.chest:'',
+      x.arm?'ذراع '+x.arm:'',
+      x.thigh?'فخذ '+x.thigh:'',
+      x.hip?'أرداف '+x.hip:''
+    ].filter(Boolean).join(' · ');
+    return `<div class="history-item"><div><b>${x.weight} كجم</b><br><small>${extras}</small></div><small>${new Date(x.date).toLocaleDateString('ar-SA')}</small></div>`;
+  }).join('')||'<div class="history-item"><small>لا توجد قياسات بعد</small></div>';
   const prs=Object.entries(cur().prs).sort((a,b)=>new Date(b[1].date)-new Date(a[1].date)).slice(0,12);
   $('#prList').innerHTML=prs.map(([k,v])=>`<div class="history-item"><div><b>${k.split('__')[1]}</b><br><small>${new Date(v.date).toLocaleDateString('ar-SA')}</small></div><b>${v.weight} × ${v.reps}</b></div>`).join('')||'<div class="history-item"><small>لا توجد أرقام قياسية بعد</small></div>';
 }
