@@ -14,6 +14,10 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
   const [injuryForm, setInjuryForm] = React.useState({part:'الظهر', pain:3, note:''});
   const [goalsForm, setGoalsForm] = React.useState(c.weeklyGoals || {workouts:3, proteinDays:7, weightLossKg:0.5, steps:60000});
   const muscleGroups = Array.from(new Set(AF.WORKOUTS.flatMap(w=>w.groups.map(([g])=>g))));
+  const qrBoxRef = React.useRef(null);
+  const [qrScanning, setQrScanning] = React.useState(false);
+  const qrVideoRef = React.useRef(null);
+  const qrStreamRef = React.useRef(null);
 
   const saveSettings = (e)=>{
     e.preventDefault();
@@ -112,8 +116,7 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
     }catch{ toast('ملف غير صالح'); }
   };
 
-  const shareTrainer = ()=>{
-    const last5 = c.history.slice(-5).reverse();
+  const shareTrainer = ()=>{    const last5 = c.history.slice(-5).reverse();
     const prs = Object.entries(c.prs).slice(0,10);
     const html = `<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تقرير ${c.name}</title>
     <body style="font-family:Tajawal,system-ui,sans-serif;background:#0a0f14;color:#f2f5f9;padding:24px;max-width:640px;margin:auto">
@@ -138,6 +141,72 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
     const perm = await Notification.requestPermission();
     setNotifEnabled(perm==='granted');
     toast(perm==='granted' ? 'تم تفعيل الإشعارات 🔔' : 'تم رفض الإذن');
+  };
+
+  function loadScriptOnce(src){
+    return new Promise((res,rej)=>{
+      if(document.querySelector(`script[data-src="${src}"]`)){ res(); return; }
+      const s=document.createElement('script'); s.src=src; s.dataset.src=src; s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const buildShareBundle = ()=>({
+    v:1, name:c.name, profile:c.profile, nutritionTargets:c.nutrition.targets,
+    weeklyGoals:c.weeklyGoals, customWorkouts:c.customWorkouts
+  });
+
+  const generateQR = async ()=>{
+    try{
+      await loadScriptOnce('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js');
+      const data = JSON.stringify(buildShareBundle());
+      const qr = qrcode(0, 'L');
+      qr.addData(data);
+      qr.make();
+      qrBoxRef.current.innerHTML = qr.createSvgTag({cellSize:4, margin:2});
+      toast('📱 امسح هذا الرمز من جهاز ثانٍ لنقل الجدول والأهداف');
+    }catch{ toast('تعذر إنشاء الرمز'); }
+  };
+
+  const stopQrScan = ()=>{
+    qrStreamRef.current?.getTracks().forEach(tr=>tr.stop());
+    qrStreamRef.current = null;
+    setQrScanning(false);
+  };
+  const toggleQrScan = async ()=>{
+    if(qrScanning){ stopQrScan(); return; }
+    if(!('BarcodeDetector' in window)){ toast('المسح غير مدعوم بهذا المتصفح'); return; }
+    try{
+      setQrScanning(true);
+      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+      qrStreamRef.current = stream;
+      qrVideoRef.current.srcObject = stream;
+      await qrVideoRef.current.play();
+      const detector = new BarcodeDetector({formats:['qr_code']});
+      const loop = async ()=>{
+        if(!qrStreamRef.current) return;
+        try{
+          const codes = await detector.detect(qrVideoRef.current);
+          if(codes.length){
+            const parsed = JSON.parse(codes[0].rawValue);
+            if(parsed && parsed.v===1){
+              mutate((next,p)=>{
+                p.name = parsed.name || p.name;
+                p.profile = {...p.profile, ...parsed.profile};
+                p.nutrition.targets = parsed.nutritionTargets || p.nutrition.targets;
+                p.weeklyGoals = parsed.weeklyGoals || p.weeklyGoals;
+                if(parsed.customWorkouts) p.customWorkouts = parsed.customWorkouts;
+              });
+              toast('✅ تم استيراد الإعدادات من الرمز');
+              stopQrScan();
+              return;
+            }
+          }
+        }catch{}
+        requestAnimationFrame(loop);
+      };
+      loop();
+    }catch{ toast('تعذر الوصول للكاميرا'); setQrScanning(false); }
   };
 
   return h(React.Fragment, null,
@@ -222,6 +291,16 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
         h('label',{style:{fontSize:12,color:'var(--muted)'}},'هدف الخطوات', h('input',{type:'number', value:goalsForm.steps, onChange:e=>setGoalsForm(f=>({...f,steps:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
       ),
       h(AF.SecondaryBtn,{onClick:saveGoals, style:{width:'100%',marginTop:10}}, 'حفظ الأهداف الأسبوعية')
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'مشاركة سريعة عبر QR', right:'الجدول والأهداف فقط'}),
+      h(AF.SecondaryBtn,{onClick:generateQR, style:{width:'100%',marginBottom:10}}, '📱 إنشاء رمز QR'),
+      h('div',{ref:qrBoxRef, style:{display:'flex',justifyContent:'center',margin:'10px 0'}}),
+      h(AF.SecondaryBtn,{onClick:toggleQrScan, style:{width:'100%'}}, qrScanning?'⏹️ إيقاف المسح':'📷 مسح رمز QR من جهاز آخر'),
+      h('video',{ref:qrVideoRef, muted:true, playsInline:true, autoPlay:true, style:{display:qrScanning?'block':'none',width:'100%',borderRadius:14,marginTop:10,background:'#000'}}),
+      h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}},
+        'ينقل فقط: اسمك، بياناتك الأساسية، جدول التمارين المخصص، وأهدافك — بدون سجل التمارين أو التغذية (كبير على QR). لنقل كل شيء استخدم التصدير/الاستيراد أو المزامنة السحابية.'
+      )
     ),
 
     h(AF.Panel,null, h(AF.SectionTitle,{title:'مشاركة مع المدرّب'}),

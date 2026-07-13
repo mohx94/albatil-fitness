@@ -35,6 +35,31 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
 
   const activeInjuries = (c.injuries||[]).filter(inj=>inj.pain>=3);
   const injuredParts = new Set(activeInjuries.map(inj=>inj.part));
+  const [gymMode, setGymMode] = React.useState(false);
+  const [focusCountdown, setFocusCountdown] = React.useState(null);
+  const wakeLockRef = React.useRef(null);
+
+  const toggleGymMode = async ()=>{
+    if(!gymMode){
+      try{ if('wakeLock' in navigator) wakeLockRef.current = await navigator.wakeLock.request('screen'); }catch{}
+      setGymMode(true);
+    } else {
+      try{ wakeLockRef.current?.release(); }catch{}
+      wakeLockRef.current = null;
+      setGymMode(false);
+    }
+  };
+  React.useEffect(()=>()=>{ try{ wakeLockRef.current?.release(); }catch{} },[]);
+
+  const startFocusMode = ()=>{
+    let n = 3;
+    setFocusCountdown(n);
+    const id = setInterval(()=>{
+      n--;
+      if(n<=0){ clearInterval(id); setFocusCountdown(null); }
+      else setFocusCountdown(n);
+    },1000);
+  };
 
   React.useEffect(()=>{
     const t = setTimeout(()=>{
@@ -180,12 +205,22 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
   const offset = RING_C*(1-ratio);
   const mm = String(Math.floor(Math.max(0,timer)/60)).padStart(2,'0');
   const ss = String(Math.max(0,timer)%60).padStart(2,'0');
+  const Wrapper = gymMode ? 'div' : React.Fragment;
+  const wrapperProps = gymMode ? {style:{position:'fixed',inset:0,zIndex:40,background:'var(--bg)',overflowY:'auto',padding:'20px 16px 40px'}} : null;
 
-  return h(React.Fragment, null,
+  return h(Wrapper, wrapperProps,
+    focusCountdown!=null ? h('div',{style:{position:'fixed',inset:0,zIndex:80,background:'var(--bg)',display:'grid',placeItems:'center'}},
+      h('div',{style:{fontSize:120,fontWeight:900,color:'var(--gold)'}}, focusCountdown>0?focusCountdown:'🔥')
+    ) : null,
     h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}},
       h(AF.GhostBtn,{onClick:()=>showScreen('workouts')},'رجوع'),
-      h('div',null, h('p',{style:{color:'var(--muted)',margin:0}}, workout.subtitle+(deload?' · 🔄 أسبوع تخفيف':'')), h('h2',{style:{margin:0}}, workout.name)),
+      h('div',null, h('p',{style:{color:'var(--muted)',margin:0}}, workout.subtitle+(deload?' · 🔄 أسبوع تخفيف':'')), h('h2',{style:{margin:0, fontSize:gymMode?28:undefined}}, workout.name)),
       h('button',{onClick:()=>{ if(confirm('مسح بيانات الحصة الحالية؟')){ mutate((next,p)=>{p.draft=null;}); setExercises(buildInitialExercises(workout,null)); } }, style:{background:'rgba(255,97,120,.1)',color:'var(--danger)',border:'1px solid rgba(255,97,120,.2)',borderRadius:14,padding:'13px 16px',cursor:'pointer'}}, 'مسح')
+    ),
+
+    h('div',{style:{display:'flex',gap:8,marginBottom:14}},
+      h(AF.SecondaryBtn,{onClick:toggleGymMode, style:{flex:1}}, gymMode?'🏟️ إيقاف وضع النادي':'🏟️ وضع النادي'),
+      h(AF.SecondaryBtn,{onClick:startFocusMode, style:{flex:1}}, '🎯 وضع التركيز')
     ),
 
     h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}},
@@ -202,7 +237,7 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
           h('circle',{cx:48,cy:48,r:42,fill:'none',stroke:'var(--surface2)',strokeWidth:8}),
           h('circle',{cx:48,cy:48,r:42,fill:'none',stroke:timer<=10&&timer>0?'var(--danger)':'var(--accent)',strokeWidth:8,strokeLinecap:'round',strokeDasharray:RING_C,strokeDashoffset:offset,style:{transition:'stroke-dashoffset 1s linear, stroke .3s'}})
         ),
-        h('div',{style:{position:'absolute',inset:0,display:'grid',placeItems:'center',fontWeight:900,fontSize:18}}, `${mm}:${ss}`)
+        h('div',{style:{position:'absolute',inset:0,display:'grid',placeItems:'center',fontWeight:900,fontSize:gymMode?26:18}}, `${mm}:${ss}`)
       ),
       h('div',{style:{flex:1}},
         h('span',{style:{display:'block',color:'var(--muted)',fontSize:12,marginBottom:6}},'مؤقت الراحة التلقائي'),
@@ -240,14 +275,17 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
           (info && openDetail[key]) ? h('div',{style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,padding:'10px 12px',marginBottom:10,fontSize:12,color:'var(--muted)'}},
             h('b',{style:{color:'var(--text)'}},'💡 نصيحة: '), info.tip, info.alt&&info.alt.length? h('span',null,h('br'),h('b',{style:{color:'var(--text)'}},'🔁 بدائل: '),info.alt.join('، ')):null
           ) : null,
-          ex.sets.map((row,i)=>h('div',{key:i, style:{display:'grid',gridTemplateColumns:'26px 1fr 1fr 1fr 40px 30px',gap:6,alignItems:'end',marginTop:9}},
+          ex.sets.map((row,i)=>{
+            const nearFailure = row.done && row.rir!=='' && +row.rir<=1;
+            return h('div',{key:i, style:{display:'grid',gridTemplateColumns:'26px 1fr 1fr 1fr 40px 30px',gap:6,alignItems:'end',marginTop:9,
+              borderRadius:12, border:nearFailure?'1px solid var(--gold)':'1px solid transparent', boxShadow:nearFailure?'0 0 12px rgba(var(--gold-rgb),.35)':'none', padding:nearFailure?4:0, transition:'box-shadow .3s ease'}},
             h('span',{style:{alignSelf:'center',textAlign:'center',color:'var(--muted)',fontSize:12}}, i+1),
             h('label',{style:{fontSize:10,color:'var(--muted)'}},'كجم', h('input',{type:'number', step:'0.5', value:row.weight, placeholder:i===0&&suggestion?String(suggestion):'', onChange:e=>updateSetField(key,i,'weight',e.target.value), style:{width:'100%',marginTop:4,background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--line)',borderRadius:10,padding:'10px 6px',textAlign:'center'}})),
             h('label',{style:{fontSize:10,color:'var(--muted)'}},'عدات', h('input',{type:'number', value:row.reps, onChange:e=>updateSetField(key,i,'reps',e.target.value), style:{width:'100%',marginTop:4,background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--line)',borderRadius:10,padding:'10px 6px',textAlign:'center'}})),
             h('label',{style:{fontSize:10,color:'var(--muted)'}},'RIR', h('input',{type:'number', min:0, max:5, value:row.rir, onChange:e=>updateSetField(key,i,'rir',e.target.value), style:{width:'100%',marginTop:4,background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--line)',borderRadius:10,padding:'10px 6px',textAlign:'center'}})),
-            h('button',{onClick:()=>toggleDone(key,i), style:{height:40,borderRadius:11,border:'1px solid var(--line)',background:row.done?'var(--good)':'var(--surface2)',color:row.done?'var(--bg)':'var(--text)',cursor:'pointer'}}, '✓'),
+            h('button',{onClick:()=>toggleDone(key,i), style:{height:40,borderRadius:11,border:'1px solid var(--line)',background:row.done?(nearFailure?'var(--gold)':'var(--good)'):'var(--surface2)',color:row.done?'var(--bg)':'var(--text)',cursor:'pointer'}}, nearFailure?'🔥':'✓'),
             h('button',{onClick:()=>removeSet(key,i), style:{height:40,borderRadius:11,border:'1px solid var(--line)',background:'transparent',color:'var(--danger)',cursor:'pointer'}}, '×')
-          )),
+          );}),
           h('button',{onClick:()=>addSet(key), style:{marginTop:10,width:'100%',background:'transparent',border:'1px dashed var(--line)',color:'var(--muted)',borderRadius:12,padding:9,cursor:'pointer'}}, '+ إضافة جولة'),
           h('textarea',{value:ex.notes, onChange:e=>updateNotes(key,e.target.value), placeholder:'ملاحظات على هذا التمرين...', style:{width:'100%',marginTop:12,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:10,resize:'vertical',minHeight:38,fontSize:13}})
         );

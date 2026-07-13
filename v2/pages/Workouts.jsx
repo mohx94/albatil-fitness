@@ -5,12 +5,21 @@ AF.WorkoutsPage = function({cur, getWorkouts, openWorkout, showScreen, advancePr
   const workouts = getWorkouts();
   const week = c.mesocycle?.week||1;
   const deload = week===4;
+  const recovery = AF.computeRecoveryScore(c);
+  const recColor = recovery.score>=80?'var(--good)':(recovery.score>=50?'var(--gold)':'var(--danger)');
 
   return h(React.Fragment, null,
     h('div',{style:{display:'flex',alignItems:'flex-end',justifyContent:'space-between',margin:'14px 0 18px'}},
       h('div',null, h('p',{style:{color:'var(--muted)',margin:0}},'3 أيام رسمية + يوم اختياري'), h('h2',{style:{margin:0}},'جدول التمارين')),
     ),
-    h('div',{style:{display:'flex',gap:8,marginBottom:14}},
+    h(AF.Panel,{style:{display:'flex',alignItems:'center',gap:14}},
+      h(AF.RingChart,{percent:recovery.score, label:recovery.score, sub:'%', size:64, color:recColor}),
+      h('div',{style:{flex:1}},
+        h('span',{style:{display:'block',color:'var(--muted)',fontSize:12,marginBottom:2}},'Recovery — جاهزيتك اليوم'),
+        h('b',{style:{fontSize:13}}, recovery.note)
+      )
+    ),
+    h('div',{style:{display:'flex',gap:8,marginBottom:14,marginTop:14}},
       h(AF.SecondaryBtn,{onClick:()=>showScreen('library'), style:{flex:1}}, '📚 مكتبة التمارين'),
       h(AF.SecondaryBtn,{onClick:()=>showScreen('editSchedule'), style:{flex:1}}, '✏️ تخصيص الجدول')
     ),

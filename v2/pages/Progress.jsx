@@ -100,6 +100,17 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
   let thisVol=0, prevVol=0;
   c.history.forEach(x=>{ const d=new Date(x.date), k=d.getFullYear()+'-'+d.getMonth(); if(k===thisMonthKey) thisVol+=x.volume; else if(k===prevMonthKey) prevVol+=x.volume; });
   const streak = AF.computeStreak(c.history);
+  const bodyScore = AF.computeBodyScore(c);
+  const archetype = AF.computeArchetype(c, streak);
+  const allAchievements = AF.ACHIEVEMENTS.concat(AF.EXTRA_ACHIEVEMENTS);
+  const muscleDaysSince = (muscle)=>{
+    const dates = c.history.filter(hh=>{
+      const w = workouts.find(x=>x.id===hh.id);
+      return w && w.groups.some(([g])=>g===muscle);
+    }).map(hh=>new Date(hh.date).getTime());
+    if(!dates.length) return null;
+    return Math.floor((Date.now()-Math.max(...dates))/86400000);
+  };
 
   const askAI = async ()=>{
     setAiLoading(true);
@@ -251,17 +262,62 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
       )
     ) : null,
 
-    tab==='achievementsTab' ? h(AF.Panel,null,
-      h(AF.SectionTitle,{title:'إنجازاتك', right: AF.ACHIEVEMENTS.filter(a=>a.check(c,streak)).length+' / '+AF.ACHIEVEMENTS.length}),
-      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginTop:6}},
-        AF.ACHIEVEMENTS.map(a=>{
-          const on = a.check(c,streak);
-          return h('div',{key:a.id, style:{background:'var(--surface2)',border:'1px solid '+(on?'var(--gold)':'var(--line)'),borderRadius:16,padding:14,textAlign:'center',opacity:on?1:0.35}},
-            h('span',{style:{fontSize:26,display:'block',marginBottom:6}}, a.icon),
-            h('b',{style:{display:'block',fontSize:12}}, a.name),
-            h('small',{style:{color:'var(--muted)',fontSize:10}}, a.desc)
-          );
-        })
+    tab==='achievementsTab' ? h(React.Fragment, null,
+      h(AF.Panel,null,
+        h(AF.SectionTitle,{title:'Body Score', right:'هذا الأسبوع'}),
+        h('div',{style:{display:'flex',alignItems:'center',gap:18}},
+          h(AF.RingChart,{percent:bodyScore.total, label:bodyScore.total, sub:'/ 100', size:88}),
+          h('div',{style:{flex:1,display:'grid',gap:6}},
+            [['adherence','الالتزام'],['nutrition','التغذية'],['strength','القوة'],['sleep','النوم'],['activity','النشاط']].map(([f,label])=>
+              h('div',{key:f, style:{display:'flex',justifyContent:'space-between',fontSize:12}}, h('span',{style:{color:'var(--muted)'}},label), h('b',null,bodyScore[f]))
+            )
+          )
+        )
+      ),
+      h(AF.Panel,null,
+        h(AF.SectionTitle,{title:'شخصيتك التدريبية'}),
+        h('div',{style:{display:'flex',alignItems:'center',gap:14}},
+          h('span',{style:{fontSize:40}}, archetype.icon),
+          h('div',null, h('b',{style:{fontSize:18,display:'block'}}, archetype.name), h('small',{style:{color:'var(--muted)'}}, archetype.desc))
+        )
+      ),
+      h(AF.Panel,null,
+        h(AF.SectionTitle,{title:'🗺️ خريطة العضلات الحرارية', right:'حسب آخر تمرين'}),
+        h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8,marginTop:6}},
+          allMuscles.map(g=>{
+            const days = muscleDaysSince(g);
+            const color = days==null?'var(--line)':(days<=2?'var(--good)':(days<=7?'var(--gold)':'var(--danger)'));
+            return h('div',{key:g, style:{background:'var(--surface2)',border:`2px solid ${color}`,borderRadius:14,padding:'12px 10px',textAlign:'center'}},
+              h('b',{style:{display:'block',fontSize:13}}, g),
+              h('small',{style:{color:'var(--muted)',fontSize:11}}, days==null?'لم يُدرّب بعد':(days===0?'اليوم':`قبل ${days} يوم`))
+            );
+          })
+        )
+      ),
+      h(AF.Panel,null,
+        h(AF.SectionTitle,{title:'🏅 قاعة المشاهير (Hall of Fame)'}),
+        h('div',{style:{display:'grid',gap:8,marginTop:6}},
+          Object.entries(c.prs).sort((a,b)=>new Date(b[1].date)-new Date(a[1].date)).slice(0,8).map(([k,v])=>{
+            const mw = v.maxWeight||v;
+            return h('div',{key:k, style:{display:'flex',alignItems:'center',gap:10,background:'var(--surface2)',border:'1px solid var(--gold)',borderRadius:14,padding:12}},
+              h('span',{style:{fontSize:20}}, '🏆'),
+              h('div',{style:{flex:1}}, h('b',null, AF.exerciseLabel(k)), h('br'), h('small',{style:{color:'var(--muted)'}}, `${mw.weight}×${mw.reps} · ${new Date(v.date).toLocaleDateString('ar-SA')}`))
+            );
+          })
+        )
+      ),
+      h(AF.Panel,null,
+        h(AF.SectionTitle,{title:'إنجازاتك', right: allAchievements.filter(a=>a.check(c,streak,workouts)).length+' / '+allAchievements.length}),
+        h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginTop:6}},
+          allAchievements.map(a=>{
+            const on = a.check(c,streak,workouts);
+            return h('div',{key:a.id, style:{background:'var(--surface2)',border:'1px solid '+(on?'var(--gold)':'var(--line)'),borderRadius:16,padding:14,textAlign:'center',opacity:on?1:0.35}},
+              h('span',{style:{fontSize:26,display:'block',marginBottom:6}}, a.icon),
+              h('b',{style:{display:'block',fontSize:12}}, a.name),
+              h('small',{style:{color:'var(--muted)',fontSize:10}}, a.desc)
+            );
+          })
+        )
       )
     ) : null
   );

@@ -2,7 +2,7 @@ const CACHE='albatil-fitness-v2-app-v2';
 const ASSETS=[
   './','./index.html','./manifest.webmanifest','./icon.svg',
   './App.jsx',
-  './utils/data.js','./utils/helpers.js',
+  './utils/data.js','./utils/gamify.js','./utils/helpers.js',
   './services/storage.js','./services/firebase.js','./services/ai.js',
   './hooks/useAppState.js',
   './components/Charts.jsx','./components/UI.jsx',

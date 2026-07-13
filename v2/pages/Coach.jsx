@@ -69,6 +69,31 @@ AF.CoachPage = function({cur, getWorkouts, showScreen}){
   if(weightPlateau) recommendations.push(`وزنك ثابت منذ أسبوعين — راجع السعرات أو زد النشاط`);
   if(weekSessions.length===0) recommendations.push(`ما سجّلت أي حصة هذا الأسبوع — ابدأ اليوم لو تقدر`);
 
+  const orderSuggestion = React.useMemo(()=>{
+    for(const w of workouts){
+      const flat = w.groups.flatMap(([g,exs])=>exs);
+      if(flat.length<2) continue;
+      const last = flat[flat.length-1];
+      const key = w.id+'__'+last[0];
+      const logs = (c.exerciseLogs[key]||[]).slice(-3);
+      if(logs.length<2) continue;
+      const minRep = parseInt(String(last[2]).split('-')[0])||0;
+      const avgReps = logs.reduce((a,l)=>a+l.reps,0)/logs.length;
+      if(avgReps < minRep) return `لاحظت أن ${last[0]} (آخر تمرين بـ${w.name}) أداؤه أضعف من نطاقه المستهدف مؤخرًا — جرّب تقدّمه بترتيب مبكر بالحصة الجاية.`;
+    }
+    return null;
+  },[c.exerciseLogs]);
+
+  const recovery = AF.computeRecoveryScore(c);
+  const hour = new Date().getHours();
+  const greetingWord = hour<12?'صباح الخير':(hour<18?'مساءك سعيد':'مساء الخير');
+  const todayWorkout = workouts[new Date().getDay()%3 % workouts.length];
+  const topRec = recommendations[0];
+  const greeting = `${greetingWord} ${c.name||''} 👋 اليوم عندك ${todayWorkout.name}. ${recovery.score>=80?'جاهزيتك ممتازة — وقت مناسب لمحاولة PR 🔥':(recovery.score<50?'جاهزيتك منخفضة شوي، خفّف الشدة اليوم.':'جاهزيتك عادية، درّب بشكل طبيعي.')}${topRec?' كمان: '+topRec:''}`;
+
+  const challenge = AF.getWeeklyChallenge(c, workouts);
+  const challengePct = Math.min(100, Math.round(challenge.progress/challenge.target*100));
+
   const askAI = async ()=>{
     setAiLoading(true);
     const stats = {
@@ -93,6 +118,21 @@ AF.CoachPage = function({cur, getWorkouts, showScreen}){
       h('div',null)
     ),
 
+    h(AF.Panel,{style:{background:'linear-gradient(135deg, rgba(var(--gold-rgb),.12), rgba(var(--gold-rgb),.03))', border:'1px solid rgba(var(--gold-rgb),.3)'}},
+      h('div',{style:{display:'flex',gap:10,alignItems:'flex-start'}},
+        h('span',{style:{fontSize:22}},'🤖'),
+        h('p',{style:{margin:0,fontSize:14,lineHeight:1.8}}, greeting)
+      )
+    ),
+
+    h(AF.Panel,null,
+      h(AF.SectionTitle,{title:'🎯 تحدي الأسبوع', right:`${challenge.progress} / ${challenge.target}`}),
+      h('div',{style:{fontSize:13,marginBottom:8}}, challenge.label),
+      h('div',{style:{height:10,borderRadius:99,background:'var(--surface2)',overflow:'hidden'}},
+        h('div',{style:{height:'100%',borderRadius:99,width:challengePct+'%',background:'var(--gold)',transition:'width .4s ease'}})
+      )
+    ),
+
     h(AF.Panel,null,
       h(AF.SectionTitle,{title:'هذا الأسبوع'}),
       h('div',{style:{display:'grid',gap:8}},
@@ -109,8 +149,9 @@ AF.CoachPage = function({cur, getWorkouts, showScreen}){
 
     h(AF.Panel,null,
       h(AF.SectionTitle,{title:'أنصح الأسبوع القادم'}),
-      recommendations.length ? h('div',{style:{display:'grid',gap:10,marginTop:6}},
-        recommendations.map((r,i)=>h('div',{key:i, style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,padding:'10px 14px',fontSize:13}}, `• ${r}`))
+      recommendations.length || orderSuggestion ? h('div',{style:{display:'grid',gap:10,marginTop:6}},
+        recommendations.map((r,i)=>h('div',{key:i, style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,padding:'10px 14px',fontSize:13}}, `• ${r}`)),
+        orderSuggestion ? h('div',{style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,padding:'10px 14px',fontSize:13}}, `• 🔄 ${orderSuggestion}`) : null
       ) : h('div',{style:{color:'var(--muted)',fontSize:13}}, 'وضعك متوازن هذا الأسبوع — استمر بنفس الالتزام 👏')
     ),
 
