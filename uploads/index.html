@@ -3,47 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0f14">
+<meta name="theme-color" content="#0d0f12">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
 <title>Albatil Fitness</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#080b10;--surface:#111722;--surface2:#182233;--line:#26324a;--text:#f2f5f9;--muted:#8b96ad;--accent:#28e0b8;--accent2:#5b8cff;--good:#28e0b8;--danger:#ff6178;--gold:#f4c469;--violet:#8b7bff;--shadow:0 18px 55px rgba(0,10,25,.4)}
+:root{--bg:#070b16;--surface:#111a30;--surface2:#182a4a;--line:#28365a;--text:#f2f5fb;--muted:#8fa0c7;--accent:#3457ff;--accent2:#6c8bff;--good:#33d6a6;--danger:#ff5d72;--gold:#f0c766;--shadow:0 18px 55px rgba(0,10,40,.35)}
 *{box-sizing:border-box}
 html{background:var(--bg)}
-body{margin:0;background:radial-gradient(circle at 50% -10%,#152033 0,#080b10 45%);color:var(--text);font-family:"Tajawal",system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh}
-button,input,textarea,select{font:inherit}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#141f38 0,#070b16 45%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh}
+button,input,textarea{font:inherit}
 button{cursor:pointer}
-a{color:var(--accent2)}
-a:hover{color:var(--accent)}
 .app-shell{max-width:720px;margin:auto;min-height:100vh;padding:18px 16px 96px}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .brand-kicker{color:var(--accent);font-size:12px;font-weight:900;letter-spacing:4px}
 .topbar h1{font-size:26px;margin:0;letter-spacing:2px}
-.topbar-actions{display:flex;gap:8px;align-items:center}
-.profile-chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:8px 14px;color:var(--text);font-weight:800;font-size:13px}
-.icon-btn{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:#fff;font-size:22px;display:grid;place-items:center}
+.icon-btn{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:#fff;font-size:24px}
 .screen{display:none}
 .screen.active{display:block;animation:fade .22s ease}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.hero-card,.panel,.timer-card{background:linear-gradient(145deg,var(--surface),#0c121c);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.hero-card,.panel,.timer-card{background:linear-gradient(145deg,var(--surface),#0d1526);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
 .hero-card{padding:22px;display:flex;justify-content:space-between;align-items:center;gap:18px}
-.hero-card h2{margin:5px 0 0;font-size:24px;line-height:1.3}
+.hero-card h2{margin:5px 0 0;font-size:25px;line-height:1.3}
 .muted{color:var(--muted);margin:0}
-.goal-ring{--p:0;width:88px;height:88px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),#1c2740 0);position:relative;flex:0 0 auto}
-.goal-ring:after{content:"";position:absolute;inset:8px;border-radius:50%;background:#0b111c}
+.goal-ring{--p:0;width:88px;height:88px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),#1b2745 0);position:relative;flex:0 0 auto}
+.goal-ring:after{content:"";position:absolute;inset:8px;border-radius:50%;background:#0c1425}
 .goal-ring span{position:relative;z-index:1;font-weight:900}
-.streak-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(244,196,105,.14),rgba(244,196,105,.04));border:1px solid rgba(244,196,105,.3);border-radius:18px;padding:12px 16px;margin-top:12px}
+.streak-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(240,199,102,.14),rgba(240,199,102,.04));border:1px solid rgba(240,199,102,.3);border-radius:18px;padding:12px 16px;margin-top:12px}
 .streak-banner span{font-size:26px}
 .streak-banner b{display:block;color:var(--gold);font-size:16px}
 .streak-banner small{color:var(--muted)}
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0}
-.tab-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px;margin-bottom:14px}
-.tab-btn{border:0;background:transparent;color:var(--muted);border-radius:12px;padding:10px 4px;font-weight:800;font-size:13px}
-.tab-btn.active{background:linear-gradient(135deg,var(--accent2),var(--violet));color:#fff}
+.tab-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px;margin-bottom:14px}
+.tab-btn{border:0;background:transparent;color:var(--muted);border-radius:12px;padding:10px;font-weight:800}
+.tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
 .progress-tab{display:none}
 .progress-tab.active{display:block;animation:fade .22s ease}
 .chart-wrap{width:100%}
@@ -56,17 +49,17 @@ a:hover{color:var(--accent)}
 .cal-grid .cal-dow{color:var(--muted);font-size:11px;padding-bottom:6px}
 .cal-day{position:relative;aspect-ratio:1;display:grid;place-items:center;border-radius:10px;background:var(--surface2);color:var(--text);font-size:13px;border:1px solid transparent}
 .cal-day.empty{background:transparent}
-.cal-day.trained{background:rgba(91,140,255,.18);border-color:rgba(91,140,255,.4);font-weight:800;color:var(--accent2)}
+.cal-day.trained{background:rgba(52,87,255,.18);border-color:rgba(52,87,255,.4);font-weight:800;color:var(--accent2)}
 .cal-day.today{border-color:var(--gold);color:var(--gold)}
 .cal-day-info{margin-top:12px;color:var(--muted);font-size:13px;min-height:18px}
 .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
 .stat-card span,.stat-card small{color:var(--muted);display:block}
 .stat-card strong{font-size:28px}
 .primary-btn,.secondary-btn,.ghost-btn,.danger-lite{border:0;border-radius:14px;padding:13px 16px;font-weight:800}
-.primary-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04140f}
+.primary-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a0c07}
 .secondary-btn{background:var(--surface2);color:var(--text);border:1px solid var(--line)}
 .ghost-btn{background:transparent;color:var(--muted);border:1px solid var(--line)}
-.danger-lite{background:rgba(255,97,120,.1);color:var(--danger);border:1px solid rgba(255,97,120,.2)}
+.danger-lite{background:rgba(255,107,107,.1);color:var(--danger);border:1px solid rgba(255,107,107,.2)}
 .giant{width:100%;padding:18px;display:flex;justify-content:space-between;align-items:center;font-size:17px;margin:4px 0 14px}
 .panel{padding:18px;margin-top:14px}
 .section-title,.section-heading,.session-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -82,13 +75,12 @@ a:hover{color:var(--accent)}
 .day-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--text);text-align:right}
 .day-card h3{margin:0 0 4px}
 .day-card p{margin:0;color:var(--muted);font-size:13px}
-.day-badge{width:52px;height:52px;border-radius:16px;background:rgba(40,224,184,.12);color:var(--accent);display:grid;place-items:center;font-weight:900}
+.day-badge{width:52px;height:52px;border-radius:16px;background:rgba(255,90,54,.12);color:var(--accent);display:grid;place-items:center;font-weight:900}
 .session-head{margin-bottom:14px}
-.resume-banner{display:none;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(135deg,rgba(91,140,255,.16),rgba(139,123,255,.08));border:1px solid rgba(91,140,255,.3);border-radius:18px;padding:14px 16px;margin-bottom:14px}
+.resume-banner{display:none;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(135deg,rgba(255,90,54,.16),rgba(255,138,61,.08));border:1px solid rgba(255,90,54,.3);border-radius:18px;padding:14px 16px;margin-bottom:14px}
 .resume-banner.show{display:flex}
 .resume-banner b{display:block}
 .resume-banner small{color:var(--muted)}
-.link-row{display:flex;gap:8px;margin-bottom:14px}
 
 /* circular timer */
 .timer-card{padding:18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:14px}
@@ -112,23 +104,16 @@ a:hover{color:var(--accent)}
 .progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .4s ease}
 
 .exercise-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;transition:box-shadow .4s,transform .2s}
-.exercise-card.pr-flash{box-shadow:0 0 0 2px var(--gold),0 0 30px rgba(244,196,105,.35)}
-.exercise-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:6px}
+.exercise-card.pr-flash{box-shadow:0 0 0 2px var(--gold),0 0 30px rgba(255,201,74,.35)}
+.exercise-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:12px}
 .exercise-head h3{margin:0}
 .exercise-head small{color:var(--accent)}
-.ex-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.ex-tag{font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
-.ex-suggest{font-size:11px;color:var(--gold);background:rgba(244,196,105,.1);border:1px solid rgba(244,196,105,.25);border-radius:99px;padding:4px 10px}
-.ex-toggle{font-size:11px;color:var(--accent2);background:transparent;border:1px solid var(--line);border-radius:99px;padding:4px 10px}
-.ex-detail{display:none;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--muted)}
-.ex-detail.show{display:block}
-.ex-detail b{color:var(--text)}
 .set-row{display:grid;grid-template-columns:26px 1fr 1fr 1fr 40px 30px;gap:6px;align-items:end;margin-top:9px}
 .set-row span{align-self:center;text-align:center;color:var(--muted);font-size:12px}
 .set-row label{font-size:10px;color:var(--muted)}
 .set-row input{width:100%;margin-top:4px;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 6px;text-align:center}
-.set-check{height:40px;border-radius:11px;border:1px solid var(--line);background:#1a2131;color:#fff}
-.set-check.done{background:var(--good);color:#052018}
+.set-check{height:40px;border-radius:11px;border:1px solid var(--line);background:#22272f;color:#fff}
+.set-check.done{background:var(--good);color:#082012}
 .set-remove{height:40px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--danger)}
 .add-set-btn{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:12px;padding:9px}
 .exercise-notes{width:100%;margin-top:12px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:10px;resize:vertical;min-height:38px;font-size:13px}
@@ -141,12 +126,12 @@ a:hover{color:var(--accent)}
 .history-list{display:grid;gap:8px;margin-top:12px}
 .history-item{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:12px}
 .history-item small{color:var(--muted)}
-.backup-actions{display:flex;gap:10px;flex-wrap:wrap}
+.backup-actions{display:flex;gap:10px}
 .file-label{display:inline-flex;align-items:center}
-.bottom-nav{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:min(calc(100% - 20px),700px);display:grid;grid-template-columns:repeat(5,1fr);background:rgba(14,18,26,.94);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;padding:7px;z-index:20}
+.bottom-nav{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:min(calc(100% - 20px),700px);display:grid;grid-template-columns:repeat(5,1fr);background:rgba(19,22,27,.94);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;padding:7px;z-index:20}
 .nutri-summary{display:flex;align-items:center;gap:18px}
-.cal-ring{--p:0;width:96px;height:96px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),#1c2740 0);position:relative}
-.cal-ring:after{content:"";position:absolute;inset:9px;border-radius:50%;background:#0b111c}
+.cal-ring{--p:0;width:96px;height:96px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),#1b2745 0);position:relative}
+.cal-ring:after{content:"";position:absolute;inset:9px;border-radius:50%;background:#0c1425}
 .cal-ring span,.cal-ring small{position:relative;z-index:1;text-align:center}
 .cal-ring span{display:block;font-weight:900;font-size:18px}
 .cal-ring small{display:block;color:var(--muted);font-size:10px}
@@ -160,27 +145,13 @@ a:hover{color:var(--accent)}
 .macro-fill.carb{background:var(--gold)}
 .macro-fill.fat{background:var(--danger)}
 .exercise-select,#foodSelect{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
-.quick-meals{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-.quick-meal-chip{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:9px 14px;font-size:13px;font-weight:700}
 .nav-btn{border:0;background:transparent;color:var(--muted);border-radius:14px;padding:8px;display:grid;gap:2px;place-items:center}
-.nav-btn.active{background:rgba(40,224,184,.13);color:var(--accent)}
+.nav-btn.active{background:rgba(255,90,54,.13);color:var(--accent)}
 .nav-btn span{font-size:18px}
 .nav-btn small{font-size:11px}
 .toast{position:fixed;bottom:95px;left:50%;transform:translate(-50%,20px);opacity:0;background:#f3f4f6;color:#111;padding:10px 18px;border-radius:99px;font-weight:800;transition:.2s;z-index:99;max-width:88%;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast.pr{background:var(--gold);color:#2b1c00}
-.bars-chart{display:grid;gap:10px;margin-top:6px}
-.bar-row{display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:center}
-.bar-row span{font-size:12px;color:var(--muted)}
-.bar-track{height:10px;border-radius:99px;background:var(--surface2);overflow:hidden}
-.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent2),var(--violet))}
-.bar-row b{font-size:12px;white-space:nowrap}
-.profile-list{display:grid;gap:8px;margin-top:12px}
-.profile-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
-.profile-row.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-.profile-row-actions{display:flex;gap:6px}
-.profile-row-actions button{border:0;background:transparent;color:var(--muted);font-size:16px;padding:4px}
-.sync-note{font-size:12px;color:var(--muted);background:var(--surface2);border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:12px}
 @media(max-width:480px){.app-shell{padding-inline:12px}.hero-card h2{font-size:21px}.goal-ring{width:76px;height:76px}.set-row{grid-template-columns:22px 1fr 1fr 1fr 34px 26px;gap:4px}.set-row input{padding:9px 2px}.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -188,27 +159,24 @@ a:hover{color:var(--accent)}
 <div class="app-shell">
   <header class="topbar">
     <div><div class="brand-kicker">ALBATIL</div><h1>FITNESS</h1></div>
-    <div class="topbar-actions">
-      <button class="profile-chip" id="profileChipBtn">👤 <span id="profileChipName">محمد</span></button>
-      <button class="icon-btn" id="installBtn" hidden>＋</button>
-    </div>
+    <button class="icon-btn" id="installBtn" hidden>＋</button>
   </header>
 
   <main>
-    <section class="screen active" data-screen="home" data-screen-label="الرئيسية">
+    <section class="screen active" data-screen="home">
       <div class="resume-banner" id="resumeBanner">
         <div><b>عندك حصة غير مكتملة</b><small id="resumeText"></small></div>
         <button class="primary-btn" id="resumeBtn">استئناف</button>
       </div>
       <div class="hero-card">
-        <div><p class="muted" id="homeGreeting">هلا 👋</p><h2>جاهز تبني أفضل نسخة منك؟</h2></div>
+        <div><p class="muted">هلا محمد 👋</p><h2>جاهز تبني أفضل نسخة منك؟</h2></div>
         <div class="goal-ring" id="goalRing"><span id="goalPercent">0%</span></div>
       </div>
       <div class="streak-banner" id="streakBanner"><span id="streakFlame">🔥</span><div><b id="streakCount">0 أيام</b><small>الالتزام المتواصل</small></div></div>
       <div class="stats-grid">
-        <article class="stat-card"><span>الوزن الحالي</span><strong id="currentWeight">—</strong><small>كجم</small></article>
-        <article class="stat-card"><span>الهدف</span><strong id="goalWeight">—</strong><small>كجم</small></article>
-        <article class="stat-card"><span>نسبة الدهون</span><strong id="bodyFat">—</strong><small>%</small></article>
+        <article class="stat-card"><span>الوزن الحالي</span><strong id="currentWeight">80.5</strong><small>كجم</small></article>
+        <article class="stat-card"><span>الهدف</span><strong id="goalWeight">75</strong><small>كجم</small></article>
+        <article class="stat-card"><span>نسبة الدهون</span><strong id="bodyFat">27.2</strong><small>%</small></article>
         <article class="stat-card"><span>تمارين مكتملة</span><strong id="workoutCount">0</strong><small>حصة</small></article>
       </div>
       <button class="primary-btn giant" id="startTodayBtn"><span>ابدأ تمرين اليوم</span><small id="todayWorkoutName">PULL</small></button>
@@ -222,24 +190,12 @@ a:hover{color:var(--accent)}
       </section>
     </section>
 
-    <section class="screen" data-screen="workouts" data-screen-label="التمارين">
+    <section class="screen" data-screen="workouts">
       <div class="section-heading"><p class="muted">3 أيام رسمية + يوم اختياري</p><h2>جدول التمارين</h2></div>
-      <div class="link-row">
-        <button class="secondary-btn" id="openLibraryBtn" style="flex:1">📚 مكتبة التمارين</button>
-      </div>
       <div id="workoutDays" class="day-list"></div>
     </section>
 
-    <section class="screen" data-screen="library" data-screen-label="مكتبة التمارين">
-      <div class="session-head">
-        <button class="ghost-btn" id="backFromLibrary">رجوع</button>
-        <div><p class="muted">شرح مبسّط وبدائل لكل تمرين</p><h2>مكتبة التمارين</h2></div>
-        <div></div>
-      </div>
-      <div id="libraryList"></div>
-    </section>
-
-    <section class="screen" data-screen="session" data-screen-label="الحصة">
+    <section class="screen" data-screen="session">
       <div class="session-head">
         <button class="ghost-btn" id="backToWorkouts">رجوع</button>
         <div><p class="muted" id="sessionSubtitle"></p><h2 id="sessionTitle"></h2></div>
@@ -273,13 +229,12 @@ a:hover{color:var(--accent)}
       <button class="primary-btn giant" id="finishWorkoutBtn">إنهاء وحفظ التمرين</button>
     </section>
 
-    <section class="screen" data-screen="progress" data-screen-label="التقدم">
+    <section class="screen" data-screen="progress">
       <div class="section-heading"><p class="muted">تابع نزولك وقوتك والتزامك</p><h2>التقدم</h2></div>
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="weightTab">الوزن</button>
         <button class="tab-btn" data-tab="strengthTab">القوة</button>
         <button class="tab-btn" data-tab="calendarTab">التقويم</button>
-        <button class="tab-btn" data-tab="analyticsTab">التحليلات</button>
       </div>
 
       <div class="progress-tab active" id="weightTab">
@@ -319,32 +274,9 @@ a:hover{color:var(--accent)}
           <div id="calDayInfo" class="cal-day-info"></div>
         </section>
       </div>
-
-      <div class="progress-tab" id="analyticsTab">
-        <section class="panel">
-          <div class="section-title"><h3>ملخص آخر 7 أيام</h3></div>
-          <div class="summary-row" id="weekSummaryRow">
-            <div><b id="weekSessions">0</b><span>حصص</span></div>
-            <div><b id="weekVolume">0</b><span>حجم كجم</span></div>
-            <div><b id="weekAvg">0</b><span>متوسط الحصة</span></div>
-          </div>
-        </section>
-        <section class="panel">
-          <div class="section-title"><h3>حجم التمرين حسب العضلة (7 أيام)</h3></div>
-          <div id="muscleBars" class="bars-chart"></div>
-        </section>
-        <section class="panel">
-          <div class="section-title"><h3>ملخص آخر 30 يوم</h3></div>
-          <div class="summary-row">
-            <div><b id="monthSessions">0</b><span>حصص</span></div>
-            <div><b id="monthVolume">0</b><span>حجم كجم</span></div>
-            <div><b id="monthStreak">0</b><span>أفضل التزام</span></div>
-          </div>
-        </section>
-      </div>
     </section>
 
-    <section class="screen" data-screen="nutrition" data-screen-label="التغذية">
+    <section class="screen" data-screen="nutrition">
       <div class="section-heading"><p class="muted">تابع أكلك اليومي</p><h2>التغذية</h2></div>
       <div class="cal-head">
         <button class="ghost-btn" id="nutriPrev">‹</button>
@@ -362,14 +294,8 @@ a:hover{color:var(--accent)}
       </section>
 
       <section class="panel">
-        <div class="section-title"><h3>وجبات سريعة</h3><span>ضغطة وحدة</span></div>
-        <div class="quick-meals" id="quickMeals"></div>
-      </section>
-
-      <section class="panel">
         <div class="section-title"><h3>إضافة وجبة</h3></div>
         <div class="form-grid">
-          <label>بحث بالباركود (تجريبي)<input id="barcodeInput" type="text" placeholder="ادخل رقم الباركود المحفوظ"></label>
           <label>الصنف<select id="foodSelect"></select></label>
           <label>الكمية (جم)<input id="foodQty" type="number" value="100" min="1"></label>
         </div>
@@ -385,7 +311,6 @@ a:hover{color:var(--accent)}
         <div class="section-title"><h3>إضافة صنف جديد لقاعدة البيانات</h3></div>
         <div class="form-grid">
           <label>الاسم<input id="newFoodName" type="text"></label>
-          <label>باركود (اختياري)<input id="newFoodBarcode" type="text"></label>
           <label>سعرات/100جم<input id="newFoodCal" type="number"></label>
           <label>بروتين/100جم<input id="newFoodProtein" type="number" step="0.1"></label>
           <label>كارب/100جم<input id="newFoodCarb" type="number" step="0.1"></label>
@@ -395,30 +320,17 @@ a:hover{color:var(--accent)}
       </section>
     </section>
 
-    <section class="screen" data-screen="settings" data-screen-label="الإعدادات">
+    <section class="screen" data-screen="settings">
       <div class="section-heading"><p class="muted">بياناتك داخل جهازك فقط</p><h2>الإعدادات</h2></div>
-
-      <section class="panel">
-        <div class="section-title"><h3>الملفات الشخصية</h3><span>تعدد المستخدمين</span></div>
-        <div id="profileList" class="profile-list"></div>
-        <button class="secondary-btn" id="addProfileBtn" style="width:100%;margin-top:12px">+ ملف شخصي جديد</button>
-      </section>
-
       <form class="panel form-grid" id="settingsForm">
         <label>اسمك<input id="nameInput" type="text"></label>
         <label>الوزن الحالي<input id="settingsWeight" type="number" step="0.1"></label>
         <label>وزن الهدف<input id="settingsGoal" type="number" step="0.1"></label>
         <label>نسبة الدهون<input id="settingsFat" type="number" step="0.1"></label>
-        <label>الطول (سم)<input id="settingsHeight" type="number" step="0.1"></label>
-        <label>العمر<input id="settingsAge" type="number"></label>
-        <label>الجنس<select id="settingsGender"><option value="male">ذكر</option><option value="female">أنثى</option></select></label>
-        <label>مستوى النشاط<select id="settingsActivity"><option value="1.2">قليل الحركة</option><option value="1.375">نشاط خفيف</option><option value="1.55">نشاط متوسط</option><option value="1.725">نشاط عالي</option></select></label>
         <button class="primary-btn" type="submit">حفظ الإعدادات</button>
       </form>
-
       <section class="panel">
         <div class="section-title"><h3>أهداف التغذية اليومية</h3></div>
-        <button class="secondary-btn" id="calcTargetsBtn" style="width:100%;margin-bottom:12px">🧮 احسب الأهداف تلقائيًا من بياناتي</button>
         <form class="form-grid" id="nutritionTargetsForm">
           <label>السعرات<input id="targetCalories" type="number"></label>
           <label>بروتين (جم)<input id="targetProtein" type="number"></label>
@@ -427,19 +339,12 @@ a:hover{color:var(--accent)}
           <button class="primary-btn" type="submit">حفظ الأهداف</button>
         </form>
       </section>
-
-      <section class="panel">
-        <div class="section-title"><h3>الإشعارات</h3></div>
-        <button class="secondary-btn" id="notifBtn" style="width:100%">🔔 تفعيل تنبيه انتهاء الراحة</button>
-      </section>
-
       <section class="panel">
         <div class="section-title"><h3>النسخة الاحتياطية</h3></div>
         <div class="backup-actions">
           <button class="secondary-btn" id="exportBtn">تصدير البيانات</button>
           <label class="secondary-btn file-label">استيراد<input type="file" id="importInput" accept="application/json" hidden></label>
         </div>
-        <div class="sync-note">☁️ المزامنة السحابية التلقائية بين الأجهزة قادمة قريبًا — حاليًا استخدم التصدير/الاستيراد لنقل بياناتك يدويًا.</div>
       </section>
     </section>
   </main>
@@ -482,90 +387,19 @@ const FOODS=[
   {id:"beef",name:"لحم بقر مشوي",cal:250,protein:26,carb:0,fat:17},
   {id:"lentil_soup",name:"شوربة عدس",cal:93,protein:6.3,carb:14,fat:1.5},
   {id:"falafel",name:"فلافل",cal:333,protein:13,carb:32,fat:18},
-  {id:"shawarma_chicken",name:"شاورما دجاج",cal:220,protein:18,carb:15,fat:10},
-  {id:"protein_shake",name:"مسحوق بروتين (سكوب)",cal:120,protein:24,carb:3,fat:1.5},
-  {id:"avocado",name:"أفوكادو",cal:160,protein:2,carb:8.5,fat:14.7},
-  {id:"quinoa",name:"كينوا مطبوخة",cal:120,protein:4.4,carb:21,fat:1.9}
+  {id:"shawarma_chicken",name:"شاورما دجاج",cal:220,protein:18,carb:15,fat:10}
 ];
-
-const QUICK_MEALS=[
-  {name:"دجاج وأرز",items:[{id:"chicken_breast",qty:150},{id:"rice_white",qty:200}]},
-  {name:"إفطار بيض وتمر",items:[{id:"egg",qty:120},{id:"dates",qty:40}]},
-  {name:"شاورما دجاج",items:[{id:"shawarma_chicken",qty:250}]},
-  {name:"زبادي ومكسرات",items:[{id:"greek_yogurt",qty:170},{id:"mixed_nuts",qty:30}]},
-  {name:"شيك بروتين وموز",items:[{id:"protein_shake",qty:30},{id:"banana",qty:120},{id:"milk",qty:250}]},
-  {name:"تونة وخبز",items:[{id:"tuna",qty:120},{id:"pita_bread",qty:60}]}
-];
-
-const EX_INFO={
-  "عقلة بمساعدة":{tip:"اسحب لوحك للأعلى بالتحكم، ركّز على الظهر لا الذراع.",alt:["سحب علوي واسع"]},
-  "سحب علوي":{tip:"اسحب المقبض حتى أعلى الصدر مع فرد الصدر.",alt:["عقلة بمساعدة","سحب أرضي"]},
-  "سحب أرضي":{tip:"حافظ على استقامة الظهر واسحب بمرفقين قريبين من الجسم.",alt:["Chest Supported Row"]},
-  "سحب ذراع مستقيمة":{tip:"حركة عزل لعضلة الظهر العريضة، لا تُحني المرفق كثيرًا.",alt:["Straight Arm Pulldown"]},
-  "Face Pull":{tip:"اسحب الحبل نحو الوجه مع فتح المرفقين للخارج.",alt:["Rear Delt Machine"]},
-  "EZ Bar Curl":{tip:"لا تتأرجح بالجسم، ركّز على البايسبس.",alt:["Cable Curl"]},
-  "Incline Dumbbell Curl":{tip:"يمنح مدى حركة أطول للبايسبس.",alt:["Hammer Curl"]},
-  "Reverse Curl":{tip:"قبضة معكوسة تستهدف الساعد العلوي.",alt:["Wrist Curl"]},
-  "Wrist Curl":{tip:"حركة صغيرة من الرسغ فقط.",alt:["Reverse Curl"]},
-  "Bench Press":{tip:"لوح ثابت، اخفض بالتحكم حتى يلمس الصدر تقريبًا.",alt:["Incline Dumbbell Press"]},
-  "Incline Dumbbell Press":{tip:"يستهدف الجزء العلوي من الصدر.",alt:["Bench Press"]},
-  "Cable Fly":{tip:"حركة عزل، حافظ على انحناء بسيط بالمرفق.",alt:["Incline Dumbbell Press"]},
-  "Cable Lateral Raise":{tip:"ارفع بزاوية للخارج والأمام قليلًا، لا ترفع الكتف.",alt:["Shoulder Press"]},
-  "Shoulder Press":{tip:"ادفع للأعلى دون قوس زائد بالظهر.",alt:["Cable Lateral Raise"]},
-  "Rope Pushdown":{tip:"افرد المرفقين بالكامل بالأسفل مع تثبيت الكتف.",alt:["Overhead Cable Extension"]},
-  "Overhead Cable Extension":{tip:"يمنح تمدد أكبر لرأس التراي الطويلة.",alt:["Rope Pushdown"]},
-  "Squat":{tip:"انزل حتى يوازي الفخذ الأرض على الأقل، الركبة بخط القدم.",alt:["Leg Press"]},
-  "Romanian Deadlift":{tip:"حافظ على استقامة الظهر وادفع الحوض للخلف.",alt:["Leg Curl"]},
-  "Leg Press":{tip:"لا تُقفل الركبة بالكامل بالأعلى.",alt:["Squat"]},
-  "Leg Curl":{tip:"عزل للعضلة الخلفية للفخذ.",alt:["Romanian Deadlift"]},
-  "Leg Extension":{tip:"عزل للفخذ الأمامي، حركة بطيئة بالأسفل.",alt:["Leg Press"]},
-  "Standing Calf Raise":{tip:"مدى حركة كامل، توقف لحظة بالأعلى.",alt:[]},
-  "Rear Delt Machine":{tip:"يستهدف الكتف الخلفي بعزل جيد.",alt:["Face Pull"]},
-  "Chest Supported Row":{tip:"يقلل الغش الحركي ويركّز على الظهر.",alt:["سحب أرضي"]},
-  "Single Arm Lat Pulldown":{tip:"عزل جانب واحد من الظهر لكل مرة.",alt:["سحب علوي"]},
-  "Straight Arm Pulldown":{tip:"ذراع شبه مستقيمة طوال الحركة.",alt:["سحب ذراع مستقيمة"]},
-  "Hammer Curl":{tip:"قبضة محايدة، يستهدف الساعد والبايسبس.",alt:["EZ Bar Curl"]},
-  "Cable Curl":{tip:"شد مستمر على البايسبس بسبب الكيبل.",alt:["EZ Bar Curl"]},
-  "Pushdown":{tip:"ثبّت المرفقين بجانب الجسم طوال الحركة.",alt:["Rope Pushdown"]},
-  "Overhead Extension":{tip:"تمدد جيد لرأس التراي الطويلة.",alt:["Overhead Cable Extension"]}
-};
 
 const WORKOUTS=[{id:"pull",name:"PULL",subtitle:"ظهر + باي + سواعد",groups:[["الظهر",[["عقلة بمساعدة",4,"6-10"],["سحب علوي",3,"8-10"],["سحب أرضي",3,"8-10"],["سحب ذراع مستقيمة",3,"12-15"]]],["الكتف الخلفي",[["Face Pull",3,"12-15"]]],["الباي",[["EZ Bar Curl",3,"8-10"],["Incline Dumbbell Curl",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]},{id:"push",name:"PUSH",subtitle:"صدر + كتف + تراي",groups:[["الصدر",[["Bench Press",3,"6-8"],["Incline Dumbbell Press",3,"8-10"],["Cable Fly",2,"12-15"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Shoulder Press",3,"8-10"]]],["التراي",[["Rope Pushdown",4,"10-12"],["Overhead Cable Extension",3,"10-12"]]]]},{id:"legs",name:"LEGS",subtitle:"أرجل + كتف",groups:[["الأرجل",[["Squat",4,"6-8"],["Romanian Deadlift",3,"8-10"],["Leg Press",3,"10-12"],["Leg Curl",3,"10-12"],["Leg Extension",3,"12-15"],["Standing Calf Raise",4,"15-20"]]],["الكتف",[["Cable Lateral Raise",4,"12-15"],["Rear Delt Machine",3,"12-15"]]]]},{id:"optional",name:"اختياري",subtitle:"ظهر + ذراع + سواعد",groups:[["الظهر",[["Chest Supported Row",3,"8-12"],["Single Arm Lat Pulldown",3,"10-12"],["Straight Arm Pulldown",3,"12-15"]]],["الذراع",[["Hammer Curl",3,"10-12"],["Cable Curl",3,"10-12"],["Pushdown",3,"10-12"],["Overhead Extension",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]}];
 
-const OLD_KEY="albatil-fitness-v1",KEY="albatil-fitness-v2";
-const BLANK_PROFILE_DATA=()=>({name:"محمد",profile:{weight:80.5,goal:75,fat:27.2,height:175,age:25,gender:"male",activity:1.55},history:[],measurements:[],prs:{},draft:null,exerciseLogs:{},nutrition:{logs:[],customFoods:[],targets:{calories:2200,protein:150,carb:220,fat:70}}});
-
-function migrateOld(){
-  try{
-    const old=JSON.parse(localStorage.getItem(OLD_KEY)||"null");
-    if(!old)return null;
-    const p=BLANK_PROFILE_DATA();
-    p.name=old.profile?.name||"محمد";
-    p.profile={...p.profile,...(old.profile||{})};
-    p.history=old.history||[];p.measurements=old.measurements||[];p.prs=old.prs||{};
-    p.draft=old.draft||null;p.exerciseLogs=old.exerciseLogs||{};
-    p.nutrition={...p.nutrition,...(old.nutrition||{})};
-    return p;
-  }catch{return null}
-}
-function load(){
-  try{
-    const raw=JSON.parse(localStorage.getItem(KEY)||"null");
-    if(raw&&raw.profiles)return raw;
-  }catch{}
-  const migrated=migrateOld();
-  const first=migrated||BLANK_PROFILE_DATA();
-  return {activeProfile:"p1",profiles:{p1:first}};
-}
-let state=load();
-function cur(){return state.profiles[state.activeProfile]}
-
+const KEY="albatil-fitness-v1",DEFAULT={profile:{name:"محمد",weight:80.5,goal:75,fat:27.2},history:[],measurements:[],prs:{},draft:null,exerciseLogs:{},nutrition:{logs:[],customFoods:[],targets:{calories:2200,protein:150,carb:220,fat:70}}};
 let calMonth=new Date().getMonth(),calYear=new Date().getFullYear();
 let nutriDate=new Date();
-let currentWorkout=null,restDuration=90,timer=restDuration,timerId=null,deferredPrompt=null,autosaveId=null,notifEnabled=false;
+let state=load(),currentWorkout=null,restDuration=90,timer=restDuration,timerId=null,deferredPrompt=null,autosaveId=null;
 const RING_R=42,RING_C=2*Math.PI*RING_R;
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
+function load(){try{return {...DEFAULT,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch{return JSON.parse(JSON.stringify(DEFAULT))}}
 function save(){localStorage.setItem(KEY,JSON.stringify(state));refreshDashboard()}
 function toast(m,cls){const t=$("#toast");t.textContent=m;t.className="toast show"+(cls?" "+cls:"");setTimeout(()=>t.classList.remove("show"),1900)}
 function showScreen(n){$$('.screen').forEach(x=>x.classList.toggle('active',x.dataset.screen===n));$$('.nav-btn').forEach(x=>x.classList.toggle('active',x.dataset.target===n));scrollTo({top:0,behavior:'smooth'})}
@@ -581,20 +415,17 @@ function refreshProgressTabs(){
   populateExerciseSelect();
   renderStrengthChart();
   renderCalendar();
-  renderAnalytics();
 }
 
 function refreshDashboard(){
-  const c=cur(),p=c.profile;
-  $('#homeGreeting').textContent=`هلا ${c.name||''} 👋`;
-  $('#profileChipName').textContent=c.name||'الملف';
-  $('#currentWeight').textContent=p.weight;$('#goalWeight').textContent=p.goal;$('#bodyFat').textContent=p.fat;$('#workoutCount').textContent=c.history.length;
-  const start=p.weight>p.goal?Math.max(p.weight,80.5):p.weight,total=Math.max(.1,Math.abs(start-p.goal)),done=Math.max(0,Math.abs(start-p.weight)),percent=Math.min(100,Math.round((c.history.length?done/total*100:0)));
+  const p=state.profile;
+  $('#currentWeight').textContent=p.weight;$('#goalWeight').textContent=p.goal;$('#bodyFat').textContent=p.fat;$('#workoutCount').textContent=state.history.length;
+  const start=80.5,total=Math.max(.1,start-p.goal),done=Math.max(0,start-p.weight),percent=Math.min(100,Math.round(done/total*100));
   $('#goalPercent').textContent=percent+'%';$('#goalRing').style.setProperty('--p',percent);
   const todayIndex=new Date().getDay()%3;
   $('#todayWorkoutName').textContent=WORKOUTS[todayIndex].name;
   $('#startTodayBtn').onclick=()=>openWorkout(WORKOUTS[todayIndex].id);
-  const last=c.history.at(-1);
+  const last=state.history.at(-1);
   $('#lastWorkoutDate').textContent=last?new Date(last.date).toLocaleDateString('ar-SA'):'لا يوجد بعد';
   $('#lastWorkoutName').textContent=last?.name||'—';
   $('#lastWorkoutSets').textContent=last?.sets||0;
@@ -603,14 +434,12 @@ function refreshDashboard(){
   const streak=computeStreak();
   $('#streakCount').textContent=streak+(streak===1?' يوم':' أيام');
   $('#streakFlame').textContent=streak>0?'🔥':'💤';
-  renderProfileList();
 }
 
 function dateKey(d){const dt=new Date(d);return dt.toISOString().slice(0,10)}
 function computeStreak(){
-  const h=cur().history;
-  if(!h.length)return 0;
-  const days=new Set(h.map(x=>dateKey(x.date)));
+  if(!state.history.length)return 0;
+  const days=new Set(state.history.map(h=>dateKey(h.date)));
   let cursor=new Date();
   if(!days.has(dateKey(cursor))){
     cursor.setDate(cursor.getDate()-1);
@@ -623,50 +452,17 @@ function computeStreak(){
 
 function paintResumeBanner(){
   const b=$('#resumeBanner');
-  const draft=cur().draft;
-  if(draft){
-    const w=WORKOUTS.find(x=>x.id===draft.id);
+  if(state.draft){
+    const w=WORKOUTS.find(x=>x.id===state.draft.id);
     b.classList.add('show');
-    $('#resumeText').textContent=w?`${w.name} · ${new Date(draft.date).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
-    $('#resumeBtn').onclick=()=>openWorkout(draft.id,true);
+    $('#resumeText').textContent=w?`${w.name} · ${new Date(state.draft.date).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
+    $('#resumeBtn').onclick=()=>openWorkout(state.draft.id,true);
   } else b.classList.remove('show');
 }
 
 function renderDays(){
-  $('#workoutDays').innerHTML=WORKOUTS.map((w,i)=>{
-    const exCount=w.groups.reduce((a,[,exs])=>a+exs.length,0);
-    return `<button class="day-card" data-id="${w.id}"><div><h3>${w.name}</h3><p>${w.subtitle} · ${exCount} تمارين</p></div><div class="day-badge">${i+1}</div></button>`;
-  }).join('');
+  $('#workoutDays').innerHTML=WORKOUTS.map((w,i)=>`<button class="day-card" data-id="${w.id}"><div><h3>${w.name}</h3><p>${w.subtitle}</p></div><div class="day-badge">${i+1}</div></button>`).join('');
   $$('.day-card').forEach(b=>b.onclick=()=>openWorkout(b.dataset.id));
-}
-$('#openLibraryBtn').onclick=()=>{renderLibrary();showScreen('library')};
-$('#backFromLibrary').onclick=()=>showScreen('workouts');
-
-function renderLibrary(){
-  let html='';
-  WORKOUTS.forEach(w=>{
-    html+=`<div class="section-title" style="margin:18px 2px 8px"><h3>${w.name}</h3><span>${w.subtitle}</span></div>`;
-    w.groups.forEach(([g,exs])=>{
-      exs.forEach(([name,sets,reps])=>{
-        const info=EX_INFO[name];
-        html+=`<article class="exercise-card">
-          <div class="exercise-head"><div><h3>${name}</h3><small>${g} · ${sets}×${reps}</small></div></div>
-          ${info?`<div class="ex-detail show"><b>💡 نصيحة:</b> ${info.tip}${info.alt&&info.alt.length?`<br><b>🔁 بدائل:</b> ${info.alt.join('، ')}`:''}</div>`:'<div class="ex-detail show">لا توجد ملاحظات إضافية لهذا التمرين بعد.</div>'}
-        </article>`;
-      });
-    });
-  });
-  $('#libraryList').innerHTML=html;
-}
-
-function suggestedWeight(key,repsRange){
-  const logs=cur().exerciseLogs[key];
-  if(!logs||!logs.length)return null;
-  const last=logs.at(-1);
-  if(!last.weight)return null;
-  const maxRep=parseInt(String(repsRange).split('-').pop())||last.reps;
-  if(last.reps>=maxRep)return +(last.weight+(last.weight>=40?2.5:1)).toFixed(1);
-  return last.weight;
 }
 
 function openWorkout(id,resume){
@@ -674,22 +470,20 @@ function openWorkout(id,resume){
   $('#sessionTitle').textContent=currentWorkout.name;
   $('#sessionSubtitle').textContent=currentWorkout.subtitle;
 
-  const draft=(resume&&cur().draft&&cur().draft.id===id)?cur().draft:null;
+  const draft=(resume&&state.draft&&state.draft.id===id)?state.draft:null;
   let html='';
   currentWorkout.groups.forEach(([g,exs])=>{
     html+=`<div class="section-title" style="margin:18px 2px 8px"><h3>${g}</h3></div>`;
     exs.forEach(([name,sets,reps])=>{
-      const key=currentWorkout.id+'__'+name,pr=cur().prs[key];
+      const key=currentWorkout.id+'__'+name,pr=state.prs[key];
       const draftEx=draft?.exercises?.[key];
       const setCount=draftEx?.sets?.length||sets;
-      const suggestion=!draftEx?suggestedWeight(key,reps):null;
-      const info=EX_INFO[name];
       let rows='';
       for(let i=0;i<setCount;i++){
         const dv=draftEx?.sets?.[i]||{};
         rows+=`<div class="set-row" data-i="${i}">
           <span>${i+1}</span>
-          <label>كجم<input class="weight" type="number" step="0.5" value="${dv.weight??''}" placeholder="${i===0&&suggestion?suggestion:''}"></label>
+          <label>كجم<input class="weight" type="number" step="0.5" value="${dv.weight??''}"></label>
           <label>عدات<input class="reps" type="number" value="${dv.reps??''}"></label>
           <label>RIR<input class="rir" type="number" min="0" max="5" value="${dv.rir??''}"></label>
           <button class="set-check${dv.done?' done':''}">✓</button>
@@ -698,11 +492,6 @@ function openWorkout(id,resume){
       }
       html+=`<article class="exercise-card" data-ex="${key}">
         <div class="exercise-head"><div><h3>${name}</h3><small>${sets} جولات × ${reps}</small></div><small class="pr-tag">${pr?`PR ${pr.weight}×${pr.reps}`:'لا يوجد PR'}</small></div>
-        <div class="ex-meta-row">
-          ${suggestion?`<span class="ex-suggest">🎯 مقترح: ${suggestion} كجم</span>`:''}
-          ${info?`<button type="button" class="ex-toggle" data-toggle-detail>ℹ️ التفاصيل والبدائل</button>`:''}
-        </div>
-        ${info?`<div class="ex-detail"><b>💡 نصيحة:</b> ${info.tip}${info.alt&&info.alt.length?`<br><b>🔁 بدائل:</b> ${info.alt.join('، ')}`:''}</div>`:''}
         <div class="sets-wrap">${rows}</div>
         <button class="add-set-btn">+ إضافة جولة</button>
         <textarea class="exercise-notes" placeholder="ملاحظات على هذا التمرين...">${draftEx?.notes||''}</textarea>
@@ -717,8 +506,6 @@ function openWorkout(id,resume){
 
 function wireExerciseCards(){
   $$('.exercise-card').forEach(card=>{
-    const toggleBtn=card.querySelector('[data-toggle-detail]');
-    if(toggleBtn)toggleBtn.onclick=()=>card.querySelector('.ex-detail').classList.toggle('show');
     card.querySelector('.add-set-btn').onclick=()=>{
       const wrap=card.querySelector('.sets-wrap');
       const i=wrap.children.length;
@@ -761,11 +548,11 @@ function wireRow(row,card){
 function checkLivePR(card,row){
   const key=card.dataset.ex;
   const weight=+row.querySelector('.weight').value||0,reps=+row.querySelector('.reps').value||0;
-  const old=cur().prs[key];
+  const old=state.prs[key];
   if(weight&&reps&&(!old||weight>old.weight||(weight===old.weight&&reps>old.reps))){
     card.classList.add('pr-flash');
     setTimeout(()=>card.classList.remove('pr-flash'),1600);
-    toast('🏆 PR جديد! استمر','pr');
+    toast('🏆 PR جديد! استمر يا محمد','pr');
   }
 }
 
@@ -801,24 +588,19 @@ function scheduleAutosave(){
       }));
       exercises[key]={sets,notes:card.querySelector('.exercise-notes').value};
     });
-    cur().draft={id:currentWorkout.id,date:new Date().toISOString(),exercises};
+    state.draft={id:currentWorkout.id,date:new Date().toISOString(),exercises};
     localStorage.setItem(KEY,JSON.stringify(state));
   },400);
 }
 
 $('#backToWorkouts').onclick=()=>showScreen('workouts');
-$('#resetSessionBtn').onclick=()=>{if(confirm('مسح بيانات الحصة الحالية؟')){cur().draft=null;save();openWorkout(currentWorkout.id)}};
+$('#resetSessionBtn').onclick=()=>{if(confirm('مسح بيانات الحصة الحالية؟')){state.draft=null;save();openWorkout(currentWorkout.id)}};
 
 function startTimer(){
   clearInterval(timerId);timer=restDuration;paintTimer();
   timerId=setInterval(()=>{
     timer--;paintTimer();
-    if(timer<=0){
-      clearInterval(timerId);navigator.vibrate?.([150,80,150]);toast('انتهت الراحة 🔥');
-      if(notifEnabled&&document.hidden&&'Notification'in window&&Notification.permission==='granted'){
-        new Notification('انتهت الراحة 🔥',{body:'وقت الجولة الجاية يا بطل',icon:'icon.svg'});
-      }
-    }
+    if(timer<=0){clearInterval(timerId);navigator.vibrate?.([150,80,150]);toast('انتهت الراحة 🔥')}
   },1000);
 }
 function paintTimer(){
@@ -846,31 +628,31 @@ $('#finishWorkoutBtn').onclick=()=>{
       const weight=+row.querySelector('.weight').value||0,reps=+row.querySelector('.reps').value||0;
       sets++;exSets++;volume+=weight*reps;exVolume+=weight*reps;
       if(weight>exBestWeight||(weight===exBestWeight&&reps>exBestReps)){exBestWeight=weight;exBestReps=reps}
-      const old=cur().prs[key];
-      if(weight&&reps&&(!old||weight>old.weight||(weight===old.weight&&reps>old.reps)))cur().prs[key]={weight,reps,date:now};
+      const old=state.prs[key];
+      if(weight&&reps&&(!old||weight>old.weight||(weight===old.weight&&reps>old.reps)))state.prs[key]={weight,reps,date:now};
     });
     if(exSets){
-      if(!cur().exerciseLogs[key])cur().exerciseLogs[key]=[];
-      cur().exerciseLogs[key].push({date:now,weight:exBestWeight,reps:exBestReps,volume:exVolume});
+      if(!state.exerciseLogs[key])state.exerciseLogs[key]=[];
+      state.exerciseLogs[key].push({date:now,weight:exBestWeight,reps:exBestReps,volume:exVolume});
     }
   });
   if(!sets){toast('سجّل جولة واحدة على الأقل');return}
-  cur().history.push({date:now,id:currentWorkout.id,name:currentWorkout.name,sets,volume,notes});
-  cur().draft=null;
+  state.history.push({date:now,id:currentWorkout.id,name:currentWorkout.name,sets,volume,notes});
+  state.draft=null;
   save();renderProgress();toast('تم حفظ التمرين 💪');showScreen('home');
 };
 
 $('#bodyForm').onsubmit=e=>{
   e.preventDefault();
   const item={date:new Date().toISOString(),weight:+$('#weightInput').value,fat:+$('#fatInput').value||null,waist:+$('#waistInput').value||null};
-  cur().measurements.push(item);cur().profile.weight=item.weight;if(item.fat)cur().profile.fat=item.fat;
+  state.measurements.push(item);state.profile.weight=item.weight;if(item.fat)state.profile.fat=item.fat;
   save();renderProgress();e.target.reset();toast('تم حفظ القياس');
 };
 
 function renderProgress(){
-  $('#progressCount').textContent=cur().measurements.length+' إدخال';
-  $('#progressList').innerHTML=cur().measurements.slice().reverse().slice(0,10).map(x=>`<div class="history-item"><div><b>${x.weight} كجم</b><br><small>${x.fat?x.fat+'% دهون':''} ${x.waist?'· خصر '+x.waist+' سم':''}</small></div><small>${new Date(x.date).toLocaleDateString('ar-SA')}</small></div>`).join('')||'<div class="history-item"><small>لا توجد قياسات بعد</small></div>';
-  const prs=Object.entries(cur().prs).sort((a,b)=>new Date(b[1].date)-new Date(a[1].date)).slice(0,12);
+  $('#progressCount').textContent=state.measurements.length+' إدخال';
+  $('#progressList').innerHTML=state.measurements.slice().reverse().slice(0,10).map(x=>`<div class="history-item"><div><b>${x.weight} كجم</b><br><small>${x.fat?x.fat+'% دهون':''} ${x.waist?'· خصر '+x.waist+' سم':''}</small></div><small>${new Date(x.date).toLocaleDateString('ar-SA')}</small></div>`).join('')||'<div class="history-item"><small>لا توجد قياسات بعد</small></div>';
+  const prs=Object.entries(state.prs).sort((a,b)=>new Date(b[1].date)-new Date(a[1].date)).slice(0,12);
   $('#prList').innerHTML=prs.map(([k,v])=>`<div class="history-item"><div><b>${k.split('__')[1]}</b><br><small>${new Date(v.date).toLocaleDateString('ar-SA')}</small></div><b>${v.weight} × ${v.reps}</b></div>`).join('')||'<div class="history-item"><small>لا توجد أرقام قياسية بعد</small></div>';
 }
 
@@ -902,7 +684,7 @@ function buildLineChart(points,{unit='',color='var(--accent)'}={}){
 }
 
 function renderWeightChart(){
-  const pts=cur().measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date))
+  const pts=state.measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date))
     .map(m=>({y:m.weight,label:new Date(m.date).toLocaleDateString('ar-SA',{day:'numeric',month:'numeric'})}));
   $('#weightChart').innerHTML=buildLineChart(pts,{unit:' كجم',color:'var(--accent2)'});
 }
@@ -913,15 +695,10 @@ function allExerciseKeys(){
   return keys;
 }
 function exerciseLabel(key){return key.split('__')[1]}
-function keyMuscleMap(){
-  const map={};
-  WORKOUTS.forEach(w=>w.groups.forEach(([g,exs])=>exs.forEach(([name])=>{map[w.id+'__'+name]=g})));
-  return map;
-}
 
 function populateExerciseSelect(){
   const sel=$('#exerciseSelect');
-  const withLogs=allExerciseKeys().filter(k=>(cur().exerciseLogs[k]||[]).length>0);
+  const withLogs=allExerciseKeys().filter(k=>(state.exerciseLogs[k]||[]).length>0);
   if(!withLogs.length){sel.innerHTML='<option>لا توجد بيانات بعد</option>';sel.disabled=true;return}
   sel.disabled=false;
   const prev=sel.value;
@@ -933,7 +710,7 @@ function populateExerciseSelect(){
 function renderStrengthChart(){
   const sel=$('#exerciseSelect');
   const key=sel.value;
-  const logs=(key&&cur().exerciseLogs[key])||[];
+  const logs=(key&&state.exerciseLogs[key])||[];
   const pts=logs.slice().sort((a,b)=>new Date(a.date)-new Date(b.date))
     .map(l=>({y:l.weight,label:new Date(l.date).toLocaleDateString('ar-SA',{day:'numeric',month:'numeric'})}));
   $('#strengthChart').innerHTML=pts.length?buildLineChart(pts,{unit:' كجم',color:'var(--gold)'}):'<div class="chart-empty">اختر تمرين له سجل كافٍ</div>';
@@ -942,7 +719,7 @@ function renderStrengthChart(){
 function renderCalendar(){
   const dowNames=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
   const trainedDays={};
-  cur().history.forEach(h=>{const k=dateKey(h.date);(trainedDays[k]=trainedDays[k]||[]).push(h.name)});
+  state.history.forEach(h=>{const k=dateKey(h.date);(trainedDays[k]=trainedDays[k]||[]).push(h.name)});
   const first=new Date(calYear,calMonth,1);
   const startDow=first.getDay();
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
@@ -965,39 +742,7 @@ function renderCalendar(){
 $('#calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}renderCalendar()};
 $('#calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}renderCalendar()};
 
-function renderAnalytics(){
-  const now=Date.now();
-  const weekAgo=now-7*86400000,monthAgo=now-30*86400000;
-  const h=cur().history;
-  const weekSessions=h.filter(x=>new Date(x.date).getTime()>=weekAgo);
-  const monthSessions=h.filter(x=>new Date(x.date).getTime()>=monthAgo);
-  const weekVol=weekSessions.reduce((a,x)=>a+x.volume,0);
-  const monthVol=monthSessions.reduce((a,x)=>a+x.volume,0);
-  $('#weekSessions').textContent=weekSessions.length;
-  $('#weekVolume').textContent=Math.round(weekVol);
-  $('#weekAvg').textContent=weekSessions.length?Math.round(weekVol/weekSessions.length):0;
-  $('#monthSessions').textContent=monthSessions.length;
-  $('#monthVolume').textContent=Math.round(monthVol);
-  $('#monthStreak').textContent=computeStreak()+' يوم';
-
-  const map=keyMuscleMap();
-  const perMuscle={};
-  Object.entries(cur().exerciseLogs).forEach(([key,logs])=>{
-    const muscle=map[key]||'أخرى';
-    logs.forEach(l=>{
-      if(new Date(l.date).getTime()>=weekAgo){
-        perMuscle[muscle]=(perMuscle[muscle]||0)+l.volume;
-      }
-    });
-  });
-  const entries=Object.entries(perMuscle).sort((a,b)=>b[1]-a[1]);
-  const max=Math.max(1,...entries.map(e=>e[1]));
-  $('#muscleBars').innerHTML=entries.length?entries.map(([m,v])=>`
-    <div class="bar-row"><span>${m}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%"></div></div><b>${Math.round(v)}</b></div>
-  `).join(''):'<div class="chart-empty">لا يوجد حجم مسجل خلال آخر 7 أيام</div>';
-}
-
-function allFoods(){return FOODS.concat(cur().nutrition.customFoods)}
+function allFoods(){return FOODS.concat(state.nutrition.customFoods)}
 function findFood(id){return allFoods().find(f=>f.id===id)}
 
 function populateFoodSelect(){
@@ -1007,34 +752,12 @@ function populateFoodSelect(){
   if(prev)sel.value=prev;
 }
 
-function renderQuickMeals(){
-  $('#quickMeals').innerHTML=QUICK_MEALS.map((m,i)=>`<button class="quick-meal-chip" data-i="${i}">${m.name}</button>`).join('');
-  $$('#quickMeals button').forEach(btn=>btn.onclick=()=>{
-    const meal=QUICK_MEALS[+btn.dataset.i];
-    const k=dateKey(nutriDate);
-    meal.items.forEach(it=>{
-      const food=findFood(it.id);
-      if(!food)return;
-      const ratio=it.qty/100;
-      cur().nutrition.logs.push({date:k,foodId:it.id,name:food.name,qty:it.qty,cal:Math.round(food.cal*ratio),protein:+(food.protein*ratio).toFixed(1),carb:+(food.carb*ratio).toFixed(1),fat:+(food.fat*ratio).toFixed(1)});
-    });
-    save();renderNutritionDay();toast(`تمت إضافة ${meal.name} 🍽️`);
-  });
-}
-
-$('#barcodeInput').oninput=()=>{
-  const code=$('#barcodeInput').value.trim();
-  if(!code)return;
-  const match=cur().nutrition.customFoods.find(f=>f.barcode===code);
-  if(match){$('#foodSelect').value=match.id;toast('تم العثور على الصنف ✅')}
-};
-
 $('#addMealBtn').onclick=()=>{
   const foodId=$('#foodSelect').value,qty=+$('#foodQty').value||0;
   const food=findFood(foodId);
   if(!food||!qty){toast('اختر صنف وأدخل الكمية');return}
   const ratio=qty/100;
-  cur().nutrition.logs.push({
+  state.nutrition.logs.push({
     date:dateKey(nutriDate),foodId,name:food.name,qty,
     cal:Math.round(food.cal*ratio),protein:+(food.protein*ratio).toFixed(1),
     carb:+(food.carb*ratio).toFixed(1),fat:+(food.fat*ratio).toFixed(1)
@@ -1044,25 +767,23 @@ $('#addMealBtn').onclick=()=>{
 
 $('#addFoodBtn').onclick=()=>{
   const name=$('#newFoodName').value.trim();
-  const barcode=$('#newFoodBarcode').value.trim();
   const cal=+$('#newFoodCal').value||0,protein=+$('#newFoodProtein').value||0,carb=+$('#newFoodCarb').value||0,fat=+$('#newFoodFat').value||0;
   if(!name||!cal){toast('أدخل الاسم والسعرات على الأقل');return}
   const id='custom_'+Date.now();
-  cur().nutrition.customFoods.push({id,name,cal,protein,carb,fat,barcode:barcode||null});
+  state.nutrition.customFoods.push({id,name,cal,protein,carb,fat});
   save();populateFoodSelect();$('#foodSelect').value=id;
-  $('#newFoodName').value='';$('#newFoodBarcode').value='';$('#newFoodCal').value='';$('#newFoodProtein').value='';$('#newFoodCarb').value='';$('#newFoodFat').value='';
+  $('#newFoodName').value='';$('#newFoodCal').value='';$('#newFoodProtein').value='';$('#newFoodCarb').value='';$('#newFoodFat').value='';
   toast('تم حفظ الصنف الجديد ✅');
 };
 
 function renderNutritionDay(){
   populateFoodSelect();
-  renderQuickMeals();
   const k=dateKey(nutriDate);
   const today=dateKey(new Date());
   $('#nutriDateLabel').textContent = k===today ? 'اليوم' : nutriDate.toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'numeric'});
-  const dayLogs=cur().nutrition.logs.filter(l=>l.date===k);
+  const dayLogs=state.nutrition.logs.filter(l=>l.date===k);
   const totals=dayLogs.reduce((a,l)=>({cal:a.cal+l.cal,protein:a.protein+l.protein,carb:a.carb+l.carb,fat:a.fat+l.fat}),{cal:0,protein:0,carb:0,fat:0});
-  const t=cur().nutrition.targets;
+  const t=state.nutrition.targets;
   const calPct=Math.min(100,Math.round(totals.cal/Math.max(1,t.calories)*100));
   $('#calRing').style.setProperty('--p',calPct);
   $('#calRingText').textContent=Math.round(totals.cal);
@@ -1077,20 +798,20 @@ function renderNutritionDay(){
   $$('#mealList [data-del]').forEach(btn=>btn.onclick=()=>{
     const idxInDay=+btn.dataset.i;
     const target=dayLogs[idxInDay];
-    const globalIdx=cur().nutrition.logs.indexOf(target);
-    if(globalIdx>-1){cur().nutrition.logs.splice(globalIdx,1);save();renderNutritionDay()}
+    const globalIdx=state.nutrition.logs.indexOf(target);
+    if(globalIdx>-1){state.nutrition.logs.splice(globalIdx,1);save();renderNutritionDay()}
   });
 }
 $('#nutriPrev').onclick=()=>{nutriDate.setDate(nutriDate.getDate()-1);renderNutritionDay()};
 $('#nutriNext').onclick=()=>{nutriDate.setDate(nutriDate.getDate()+1);renderNutritionDay()};
 
 function fillNutritionTargets(){
-  const t=cur().nutrition.targets;
+  const t=state.nutrition.targets;
   $('#targetCalories').value=t.calories;$('#targetProtein').value=t.protein;$('#targetCarb').value=t.carb;$('#targetFat').value=t.fat;
 }
 $('#nutritionTargetsForm').onsubmit=e=>{
   e.preventDefault();
-  cur().nutrition.targets={
+  state.nutrition.targets={
     calories:+$('#targetCalories').value||2200,
     protein:+$('#targetProtein').value||150,
     carb:+$('#targetCarb').value||220,
@@ -1099,81 +820,14 @@ $('#nutritionTargetsForm').onsubmit=e=>{
   save();renderNutritionDay();toast('تم حفظ أهداف التغذية');
 };
 
-$('#calcTargetsBtn').onclick=()=>{
-  const p=cur().profile;
-  if(!p.height||!p.age){toast('أدخل الطول والعمر بالإعدادات أولًا');return}
-  const bmr=p.gender==='female'?(10*p.weight+6.25*p.height-5*p.age-161):(10*p.weight+6.25*p.height-5*p.age+5);
-  let tdee=bmr*(+p.activity||1.55);
-  if(p.goal<p.weight)tdee*=0.85;
-  else if(p.goal>p.weight)tdee*=1.1;
-  const calories=Math.round(tdee);
-  const protein=Math.round(p.weight*2);
-  const fat=Math.round(tdee*0.25/9);
-  const carb=Math.round(Math.max(0,(calories-protein*4-fat*9))/4);
-  $('#targetCalories').value=calories;$('#targetProtein').value=protein;$('#targetCarb').value=carb;$('#targetFat').value=fat;
-  toast('تم احتساب الأهداف — راجعها واحفظ');
-};
-
 function fillSettings(){
-  const p=cur().profile;
-  $('#nameInput').value=cur().name;$('#settingsWeight').value=p.weight;$('#settingsGoal').value=p.goal;$('#settingsFat').value=p.fat;
-  $('#settingsHeight').value=p.height||'';$('#settingsAge').value=p.age||'';
-  $('#settingsGender').value=p.gender||'male';$('#settingsActivity').value=p.activity||1.55;
+  const p=state.profile;
+  $('#nameInput').value=p.name;$('#settingsWeight').value=p.weight;$('#settingsGoal').value=p.goal;$('#settingsFat').value=p.fat;
 }
 $('#settingsForm').onsubmit=e=>{
   e.preventDefault();
-  cur().name=$('#nameInput').value||'محمد';
-  cur().profile={
-    weight:+$('#settingsWeight').value||80.5,goal:+$('#settingsGoal').value||75,fat:+$('#settingsFat').value||27.2,
-    height:+$('#settingsHeight').value||175,age:+$('#settingsAge').value||25,
-    gender:$('#settingsGender').value,activity:+$('#settingsActivity').value
-  };
+  state.profile={name:$('#nameInput').value||'محمد',weight:+$('#settingsWeight').value||80.5,goal:+$('#settingsGoal').value||75,fat:+$('#settingsFat').value||27.2};
   save();toast('تم حفظ الإعدادات');
-};
-
-function renderProfileList(){
-  const ids=Object.keys(state.profiles);
-  $('#profileList').innerHTML=ids.map(id=>{
-    const pr=state.profiles[id];
-    const active=id===state.activeProfile;
-    return `<div class="profile-row${active?' active':''}"><span>${pr.name||'ملف'}</span><div class="profile-row-actions">
-      ${!active?`<button data-switch="${id}" title="تفعيل">✅</button>`:''}
-      ${ids.length>1?`<button data-del-profile="${id}" title="حذف">🗑</button>`:''}
-    </div></div>`;
-  }).join('');
-  $$('#profileList [data-switch]').forEach(b=>b.onclick=()=>{state.activeProfile=b.dataset.switch;localStorage.setItem(KEY,JSON.stringify(state));fullRepaint();toast('تم تبديل الملف الشخصي')});
-  $$('#profileList [data-del-profile]').forEach(b=>b.onclick=()=>{
-    if(!confirm('حذف هذا الملف الشخصي نهائيًا؟'))return;
-    const id=b.dataset.delProfile;
-    delete state.profiles[id];
-    if(state.activeProfile===id)state.activeProfile=Object.keys(state.profiles)[0];
-    localStorage.setItem(KEY,JSON.stringify(state));fullRepaint();toast('تم حذف الملف');
-  });
-}
-$('#addProfileBtn').onclick=()=>{
-  const name=prompt('اسم الملف الشخصي الجديد؟');
-  if(!name)return;
-  const id='p'+Date.now();
-  state.profiles[id]=BLANK_PROFILE_DATA();
-  state.profiles[id].name=name;
-  state.activeProfile=id;
-  localStorage.setItem(KEY,JSON.stringify(state));
-  fullRepaint();
-  toast('تم إنشاء الملف الشخصي');
-};
-$('#profileChipBtn').onclick=()=>showScreen('settings');
-
-function fullRepaint(){
-  renderDays();renderProgress();fillSettings();refreshDashboard();renderWeightChart();
-  populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();
-  fillNutritionTargets();renderNutritionDay();showScreen('home');
-}
-
-$('#notifBtn').onclick=async()=>{
-  if(!('Notification'in window)){toast('الإشعارات غير مدعومة بهذا المتصفح');return}
-  const perm=await Notification.requestPermission();
-  notifEnabled=perm==='granted';
-  toast(notifEnabled?'تم تفعيل الإشعارات 🔔':'تم رفض الإذن');
 };
 
 $('#exportBtn').onclick=()=>{
@@ -1181,20 +835,15 @@ $('#exportBtn').onclick=()=>{
   a.href=URL.createObjectURL(blob);a.download='albatil-fitness-backup.json';a.click();URL.revokeObjectURL(a.href);
 };
 $('#importInput').onchange=async e=>{
-  try{
-    const parsed=JSON.parse(await e.target.files[0].text());
-    state=parsed.profiles?parsed:{activeProfile:"p1",profiles:{p1:parsed}};
-    localStorage.setItem(KEY,JSON.stringify(state));
-    fullRepaint();toast('تم استيراد البيانات');
-  }catch{toast('ملف غير صالح')}
+  try{state=JSON.parse(await e.target.files[0].text());save();renderProgress();fillSettings();toast('تم استيراد البيانات')}
+  catch{toast('ملف غير صالح')}
 };
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('#installBtn').hidden=false});
 $('#installBtn').onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$('#installBtn').hidden=true}};
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-if('Notification'in window&&Notification.permission==='granted')notifEnabled=true;
 
-renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();renderWeightChart();populateExerciseSelect();renderStrengthChart();renderCalendar();renderAnalytics();fillNutritionTargets();renderNutritionDay();
+renderDays();renderProgress();fillSettings();refreshDashboard();paintTimer();renderWeightChart();populateExerciseSelect();renderStrengthChart();renderCalendar();fillNutritionTargets();renderNutritionDay();
 </script>
 </body>
 </html>
