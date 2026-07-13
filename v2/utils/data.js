@@ -46,7 +46,35 @@ AF.FOODS = [
   {id:"tomato",name:"طماطم",cal:18,protein:0.9,carb:3.9,fat:0.2},
   {id:"orange",name:"برتقال",cal:47,protein:0.9,carb:12,fat:0.1},
   {id:"almonds",name:"لوز",cal:579,protein:21,carb:22,fat:50},
-  {id:"peanut_butter",name:"زبدة فول سوداني",cal:588,protein:25,carb:20,fat:50}
+  {id:"peanut_butter",name:"زبدة فول سوداني",cal:588,protein:25,carb:20,fat:50},
+
+  // زبادي ندى اليوناني — كل الأنواع والنكهات (قيم تقريبية لكل 100 جرام)
+  {id:"nada_greek_lowfat",name:"زبادي يوناني ندى سادة قليل الدسم",cal:66,protein:7,carb:5,fat:2},
+  {id:"nada_greek_fullfat",name:"زبادي يوناني ندى سادة كامل الدسم",cal:114,protein:6,carb:5,fat:8},
+  {id:"nada_greek_zero",name:"زبادي يوناني ندى 0% دسم",cal:55,protein:9,carb:4,fat:0},
+  {id:"nada_greek_berries",name:"زبادي يوناني ندى بالتوت",cal:135,protein:4.7,carb:15.3,fat:6},
+  {id:"nada_greek_dates",name:"زبادي يوناني ندى بالتمر",cal:145,protein:4,carb:20,fat:5},
+  {id:"nada_greek_mango",name:"زبادي يوناني ندى بالمانجو",cal:120,protein:4.2,carb:17,fat:4},
+  {id:"nada_greek_drink",name:"شراب زبادي يوناني ندى",cal:122,protein:4,carb:16,fat:4},
+
+  // شوفان الهنا (قيم تقريبية للشوفان الجاف قبل الطبخ لكل 100 جرام)
+  {id:"alhana_oats",name:"شوفان الهنا",cal:379,protein:13,carb:68,fat:7},
+
+  // دجاجة كاملة
+  {id:"whole_chicken_bonein",name:"دجاجة كاملة مشوية (وزن مع العظم، مع الجلد)",cal:172,protein:19,carb:0,fat:10},
+  {id:"whole_chicken_meat_only",name:"لحم دجاجة كاملة منزوع العظم (بدون جلد)",cal:190,protein:29,carb:0,fat:7.5},
+
+  // أصناف ووجبات إضافية
+  {id:"kunafa",name:"كنافة",cal:340,protein:6,carb:40,fat:17},
+  {id:"baklava",name:"بقلاوة",cal:430,protein:6,carb:48,fat:24},
+  {id:"samosa",name:"سمبوسة لحم",cal:260,protein:8,carb:24,fat:15},
+  {id:"corn",name:"ذرة مسلوقة",cal:96,protein:3.4,carb:21,fat:1.5},
+  {id:"watermelon",name:"بطيخ",cal:30,protein:0.6,carb:7.6,fat:0.2},
+  {id:"grapes",name:"عنب",cal:69,protein:0.7,carb:18,fat:0.2},
+  {id:"dark_chocolate",name:"شوكولاتة داكنة",cal:546,protein:7.8,carb:46,fat:31},
+  {id:"cheddar",name:"جبنة شيدر",cal:403,protein:23,carb:1.3,fat:33},
+  {id:"orange_juice",name:"عصير برتقال طازج",cal:45,protein:0.7,carb:10.4,fat:0.2},
+  {id:"grilled_beef_kabab",name:"كباب لحم مشوي",cal:215,protein:22,carb:2,fat:13}
 ];
 
 AF.QUICK_MEALS = [
@@ -55,7 +83,9 @@ AF.QUICK_MEALS = [
   {name:"شاورما دجاج",items:[{id:"shawarma_chicken",qty:250}]},
   {name:"زبادي ومكسرات",items:[{id:"greek_yogurt",qty:170},{id:"mixed_nuts",qty:30}]},
   {name:"شيك بروتين وموز",items:[{id:"protein_shake",qty:30},{id:"banana",qty:120},{id:"milk",qty:250}]},
-  {name:"تونة وخبز",items:[{id:"tuna",qty:120},{id:"pita_bread",qty:60}]}
+  {name:"تونة وخبز",items:[{id:"tuna",qty:120},{id:"pita_bread",qty:60}]},
+  {name:"فطور شوفان الهنا وزبادي ندى",items:[{id:"alhana_oats",qty:50},{id:"nada_greek_lowfat",qty:170},{id:"banana",qty:100}]},
+  {name:"دجاجة كاملة وأرز",items:[{id:"whole_chicken_meat_only",qty:200},{id:"rice_white",qty:200}]}
 ];
 
 AF.EX_INFO = {
