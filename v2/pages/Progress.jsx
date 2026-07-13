@@ -74,6 +74,25 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
     logs.forEach(l=>{ if(new Date(l.date).getTime()>=weekAgo) perMuscle[muscle]=(perMuscle[muscle]||0)+l.volume; });
   });
   const muscleEntries = Object.entries(perMuscle).sort((a,b)=>b[1]-a[1]);
+  const allMuscleGroups = Array.from(new Set(workouts.flatMap(w=>w.groups.map(([g])=>g))));
+  const perMuscle30 = {};
+  Object.entries(c.exerciseLogs).forEach(([key,logs])=>{
+    const muscle = muscleMap[key]||'أخرى';
+    logs.forEach(l=>{ if(new Date(l.date).getTime()>=monthAgo) perMuscle30[muscle]=(perMuscle30[muscle]||0)+l.volume; });
+  });
+  const muscle30Entries = allMuscleGroups.map(g=>[g, perMuscle30[g]||0]).sort((a,b)=>b[1]-a[1]);
+  const leastTrained = muscle30Entries[muscle30Entries.length-1];
+
+  const goals = c.weeklyGoals || {workouts:3, proteinDays:7, weightLossKg:0.5, steps:60000};
+  const last7Dates = Array.from({length:7}).map((_,i)=>{ const d=new Date(); d.setDate(d.getDate()-i); return AF.dateKey(d); });
+  const proteinDaysHit = last7Dates.filter(dk=>{
+    const total = c.nutrition.logs.filter(l=>l.date===dk).reduce((a,l)=>a+l.protein,0);
+    return total >= (c.nutrition.targets.protein*0.9);
+  }).length;
+  const weekSteps = last7Dates.reduce((a,dk)=>a+((c.dailyLog?.[dk]?.steps)||0),0);
+  const measurementsSorted = c.measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const recentMeasurements = measurementsSorted.filter(m=>new Date(m.date).getTime()>=weekAgo-7*86400000);
+  const weightChangeAbs = recentMeasurements.length>=2 ? Math.abs(recentMeasurements[0].weight-recentMeasurements[recentMeasurements.length-1].weight) : 0;
   const nowD = new Date();
   const thisMonthKey = nowD.getFullYear()+'-'+nowD.getMonth();
   const prevD = new Date(nowD.getFullYear(), nowD.getMonth()-1, 1);
@@ -144,7 +163,18 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
         h('select',{value:activeKey||'', onChange:e=>setExerciseKey(e.target.value), style:{width:'100%',background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--line)',borderRadius:12,padding:12,marginBottom:14}},
           keysWithLogs.length? keysWithLogs.map(k=>h('option',{key:k,value:k}, AF.exerciseLabel(k))) : h('option',null,'لا توجد بيانات بعد')
         ),
-        h(AF.LineChart,{points:strengthPoints, unit:' كجم', color:'var(--gold)'})
+        h(AF.LineChart,{points:strengthPoints, unit:' كجم', color:'var(--gold)'}),
+        activeKey ? h('div',{style:{display:'grid',gap:6,marginTop:14}},
+          (c.exerciseLogs[activeKey]||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).map((l,i,arr)=>{
+            const prevL = arr[i-1];
+            const delta = prevL ? (l.weight-prevL.weight) : 0;
+            const arrow = i===0 ? '' : (delta>0?' ↑':(delta<0?' ↓':' →'));
+            return h('div',{key:i, style:{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--muted)',padding:'4px 0',borderBottom:'1px solid var(--line)'}},
+              h('span',null, new Date(l.date).toLocaleDateString('ar-SA',{day:'numeric',month:'short'})),
+              h('span',{style:{color:'var(--text)',fontWeight:700}}, `${l.weight}×${l.reps}`, h('span',{style:{color:delta>0?'var(--good)':(delta<0?'var(--danger)':'var(--muted)')}}, arrow))
+            );
+          })
+        ) : null
       ),
       h(AF.Panel,null, h(AF.SectionTitle,{title:'أفضل الأرقام', right:'PR'}),
         h('div',{style:{display:'grid',gap:8,marginTop:12}},
@@ -181,6 +211,18 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
     ) : null,
 
     tab==='analyticsTab' ? h(React.Fragment,null,
+      h(AF.Panel,null, h(AF.SectionTitle,{title:'أهداف هذا الأسبوع'}),
+        h('div',{style:{display:'grid',gap:10,marginTop:6}},
+          [
+            {label:`تمارين (${weekSessions.length}/${goals.workouts})`, done:weekSessions.length>=goals.workouts},
+            {label:`بروتين محقق ${proteinDaysHit}/${goals.proteinDays} أيام`, done:proteinDaysHit>=goals.proteinDays},
+            {label:`نزول الوزن ${weightChangeAbs.toFixed(1)}/${goals.weightLossKg} كجم`, done:weightChangeAbs>=goals.weightLossKg},
+            {label:`خطوات ${weekSteps.toLocaleString('en-US')}/${goals.steps.toLocaleString('en-US')}`, done:weekSteps>=goals.steps}
+          ].map((g,i)=>h('div',{key:i, style:{display:'flex',alignItems:'center',gap:8,fontSize:13}},
+            h('span',null, g.done?'✅':'⬜️'), h('span',{style:{color:g.done?'var(--text)':'var(--muted)'}}, g.label)
+          ))
+        )
+      ),
       h(AF.Panel,null, h(AF.SectionTitle,{title:'ملخص آخر 7 أيام'}),
         h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center',marginTop:18}},
           h('div',null, h('b',{style:{fontSize:18,display:'block'}}, weekSessions.length), h('span',{style:{fontSize:11,color:'var(--muted)'}},'حصص')),
@@ -189,6 +231,12 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
         )
       ),
       h(AF.Panel,null, h(AF.SectionTitle,{title:'حجم التمرين حسب العضلة (7 أيام)'}), h(AF.BarChart,{entries:muscleEntries})),
+      h(AF.Panel,null, h(AF.SectionTitle,{title:'توازن العضلات (30 يوم)'}),
+        h(AF.BarChart,{entries:muscle30Entries}),
+        leastTrained ? h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}},
+          leastTrained[1]===0 ? `⚠️ ${leastTrained[0]} ما تدرّبت عليها آخر 30 يوم أبدًا.` : `${leastTrained[0]} أقل عضلة تمرّنتها خلال آخر شهر (${Math.round(leastTrained[1])} كجم حجم).`
+        ) : null
+      ),
       h(AF.Panel,null, h(AF.SectionTitle,{title:'ملخص آخر 30 يوم'}),
         h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center',marginTop:18}},
           h('div',null, h('b',{style:{fontSize:18,display:'block'}}, monthSessions.length), h('span',{style:{fontSize:11,color:'var(--muted)'}},'حصص')),

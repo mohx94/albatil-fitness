@@ -28,6 +28,13 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
   const [timerRunning, setTimerRunning] = React.useState(false);
   const timerRef = React.useRef(null);
   const REST = 90;
+  const sessionStartRef = React.useRef(Date.now());
+  const restStatsRef = React.useRef({total:0, max:0, count:0});
+  const [ratingPrompt, setRatingPrompt] = React.useState(null); // {sets,volume,notes,now}
+  const [rating, setRating] = React.useState({stars:0, energy:3, sleep:3, effort:3, stress:3});
+
+  const activeInjuries = (c.injuries||[]).filter(inj=>inj.pain>=3);
+  const injuredParts = new Set(activeInjuries.map(inj=>inj.part));
 
   React.useEffect(()=>{
     const t = setTimeout(()=>{
@@ -46,6 +53,8 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
       t--; setTimer(t);
       if(t<=0){
         clearInterval(timerRef.current); setTimerRunning(false);
+        restStatsRef.current.total += REST; restStatsRef.current.count++;
+        restStatsRef.current.max = Math.max(restStatsRef.current.max, REST);
         navigator.vibrate?.([150,80,150]); toast('انتهت الراحة 🔥'); playBeep();
         if(notifEnabled && document.hidden && 'Notification' in window && Notification.permission==='granted'){
           new Notification('انتهت الراحة 🔥',{body:'وقت الجولة الجاية يا بطل', icon:'../icon.svg'});
@@ -141,8 +150,11 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
       }
     });
     if(!sets){ toast('سجّل جولة واحدة على الأقل'); return; }
+    const durationMin = Math.max(1, Math.round((Date.now()-sessionStartRef.current)/60000));
+    const restTotalMin = Math.round(restStatsRef.current.total/60);
+    const restMaxSec = restStatsRef.current.max;
     mutate((next,p)=>{
-      p.history.push({date:now, id:workout.id, name:workout.name, sets, volume, notes});
+      p.history.push({date:now, id:workout.id, name:workout.name, sets, volume, notes, durationMin, restTotalMin, restMaxSec, restCount:restStatsRef.current.count});
       Object.entries(prUpdates).forEach(([k,v])=>{ p.prs[k]=v; });
       Object.entries(exerciseLogUpdates).forEach(([k,v])=>{
         if(!p.exerciseLogs[k]) p.exerciseLogs[k]=[];
@@ -151,8 +163,18 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
       p.draft = null;
     });
     toast('تم حفظ التمرين 💪');
+    setRatingPrompt({date:now});
+  };
+
+  const submitRating = ()=>{
+    mutate((next,p)=>{
+      const idx = p.history.findIndex(hh=>hh.date===ratingPrompt.date);
+      if(idx>-1) p.history[idx].rating = rating;
+    });
+    setRatingPrompt(null);
     showScreen('home');
   };
+  const skipRating = ()=>{ setRatingPrompt(null); showScreen('home'); };
 
   const ratio = Math.max(0,timer)/REST;
   const offset = RING_C*(1-ratio);
@@ -192,7 +214,10 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
     ),
 
     workout.groups.map(([g,list])=>h(React.Fragment,{key:g},
-      h('div',{style:{margin:'18px 2px 8px'}}, h('h3',{style:{margin:0}}, g)),
+      h('div',{style:{display:'flex',alignItems:'center',gap:8,margin:'18px 2px 8px'}},
+        h('h3',{style:{margin:0}}, g),
+        injuredParts.has(g) ? h('span',{style:{fontSize:11,color:'var(--danger)',background:'rgba(255,97,120,.1)',border:'1px solid rgba(255,97,120,.25)',borderRadius:99,padding:'3px 9px'}}, '⚠️ إصابة مسجلة بهذه العضلة') : null
+      ),
       list.map(([name,setsCount,reps])=>{
         const key = workout.id+'__'+name;
         const ex = exercises[key];
@@ -229,6 +254,23 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
       })
     )),
 
-    h(AF.PrimaryBtn,{onClick:finishWorkout, style:{width:'100%',padding:18,margin:'4px 0 14px'}}, 'إنهاء وحفظ التمرين')
+    h(AF.PrimaryBtn,{onClick:finishWorkout, style:{width:'100%',padding:18,margin:'4px 0 14px'}}, 'إنهاء وحفظ التمرين'),
+
+    ratingPrompt ? h('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.6)',zIndex:60,display:'grid',placeItems:'center',padding:16}},
+      h('div',{style:{background:'var(--surface)',border:'1px solid var(--line)',borderRadius:22,padding:22,maxWidth:380,width:'100%'}},
+        h('h3',{style:{marginTop:0}}, 'كيف كانت الحصة؟'),
+        h('div',{style:{display:'flex',gap:6,justifyContent:'center',fontSize:28,marginBottom:16}},
+          [1,2,3,4,5].map(n=>h('span',{key:n, onClick:()=>setRating(r=>({...r,stars:n})), style:{cursor:'pointer',opacity:rating.stars>=n?1:0.25}}, '⭐'))
+        ),
+        [['energy','الطاقة'],['sleep','النوم'],['effort','الإجهاد'],['stress','التوتر']].map(([f,label])=>h('div',{key:f, style:{marginBottom:12}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--muted)',marginBottom:4}}, h('span',null,label), h('span',null,rating[f])),
+          h('input',{type:'range', min:1, max:5, value:rating[f], onChange:e=>setRating(r=>({...r,[f]:+e.target.value})), style:{width:'100%'}})
+        )),
+        h('div',{style:{display:'flex',gap:10,marginTop:10}},
+          h(AF.GhostBtn,{onClick:skipRating, style:{flex:1}}, 'تخطي'),
+          h(AF.PrimaryBtn,{onClick:submitRating, style:{flex:1}}, 'حفظ')
+        )
+      )
+    ) : null
   );
 };

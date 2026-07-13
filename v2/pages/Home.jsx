@@ -8,13 +8,14 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
   const workouts = getWorkouts();
   const todayWorkout = workouts[todayIndex % workouts.length];
   const streak = AF.computeStreak(c.history);
-  const start = p.weight>p.goal ? Math.max(p.weight,80.5) : p.weight;
-  const total = Math.max(0.1, Math.abs(start-p.goal));
-  const done = Math.max(0, Math.abs(start-p.weight));
-  const percent = Math.min(100, Math.round(c.history.length? done/total*100 : 0));
   const last = c.history[c.history.length-1];
   const draft = c.draft;
   const draftWorkout = draft ? workouts.find(w=>w.id===draft.id) : null;
+  const todayKey = AF.dateKey(today);
+  const dayLog = c.dailyLog?.[todayKey] || {};
+  const todayNutrition = c.nutrition.logs.filter(l=>l.date===todayKey)
+    .reduce((a,l)=>({cal:a.cal+l.cal, protein:a.protein+l.protein}), {cal:0,protein:0});
+  const t = c.nutrition.targets;
 
   return h(React.Fragment, null,
     draft ? h('div',{style:{
@@ -29,47 +30,39 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
       h(AF.PrimaryBtn,{onClick:()=>openWorkout(draft.id,true)}, 'استئناف')
     ) : null,
 
-    h('div',{style:{
-      background:'linear-gradient(145deg, var(--surface), #0c121c)',border:'1px solid var(--line)',
-      borderRadius:22,boxShadow:'var(--shadow)',padding:22,display:'flex',justifyContent:'space-between',alignItems:'center',gap:18
-    }},
-      h('div',null,
-        h('p',{style:{color:'var(--muted)',margin:0}}, `هلا ${c.name||''} 👋`),
-        h('h2',{style:{margin:'5px 0 0',fontSize:24,lineHeight:1.3}}, 'جاهز تبني أفضل نسخة منك؟')
-      ),
-      h(AF.RingChart,{percent, label:percent+'%'})
+    h('div',{style:{margin:'4px 0 14px'}},
+      h('p',{style:{color:'var(--muted)',margin:0}}, `هلا ${c.name||''} 👋 · ${today.toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'long'})}`),
+      h('h2',{style:{margin:'4px 0 0'}}, '🔥 اليوم')
     ),
 
-    h('div',{style:{
-      display:'flex',alignItems:'center',gap:12,
-      background:'linear-gradient(135deg, rgba(244,196,105,.14), rgba(244,196,105,.04))',
-      border:'1px solid rgba(244,196,105,.3)',borderRadius:18,padding:'12px 16px',marginTop:12
-    }},
-      h('span',{style:{fontSize:26}}, streak>0?'🔥':'💤'),
-      h('div',null,
-        h('b',{style:{display:'block',color:'var(--gold)',fontSize:16}}, streak+(streak===1?' يوم':' أيام')),
-        h('small',{style:{color:'var(--muted)'}},'الالتزام المتواصل')
-      )
-    ),
-
-    h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12,margin:'14px 0'}},
-      h(AF.StatCard,{label:'الوزن الحالي', value:p.weight, unit:'كجم'}),
-      h(AF.StatCard,{label:'الهدف', value:p.goal, unit:'كجم'}),
-      h(AF.StatCard,{label:'نسبة الدهون', value:p.fat, unit:'%'}),
-      h(AF.StatCard,{label:'تمارين مكتملة', value:c.history.length, unit:'حصة'})
-    ),
-
-    h(AF.PrimaryBtn,{onClick:()=>openWorkout(todayWorkout.id), style:{width:'100%',padding:18,display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:17,margin:'4px 0 14px'}},
-      h('span',null,'ابدأ تمرين اليوم'), h('small',null, todayWorkout.name)
+    h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}},
+      h(AF.StatCard,{label:'النوم', value:dayLog.sleep??'—', unit:'ساعة'}),
+      h(AF.StatCard,{label:'الوزن', value:p.weight, unit:'كجم'}),
+      h(AF.StatCard,{label:'السعرات', value:`${Math.round(todayNutrition.cal)} / ${t.calories}`}),
+      h(AF.StatCard,{label:'البروتين', value:`${Math.round(todayNutrition.protein)} / ${t.protein}`, unit:'جم'}),
+      h(AF.StatCard,{label:'الخطوات', value:(dayLog.steps||0).toLocaleString('en-US')}),
+      h(AF.StatCard,{label:'الالتزام', value:streak, unit:streak===1?'يوم':'أيام'})
     ),
 
     h(AF.Panel,null,
-      h(AF.SectionTitle,{title:'آخر نشاط', right: last?new Date(last.date).toLocaleDateString('ar-SA'):'لا يوجد بعد'}),
-      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center',marginTop:18}},
-        h('div',null, h('b',{style:{fontSize:18,display:'block'}}, last?.name||'—'), h('span',{style:{fontSize:11,color:'var(--muted)'}},'التمرين')),
-        h('div',{style:{borderRight:'1px solid var(--line)'}}, h('b',{style:{fontSize:18,display:'block'}}, last?.sets||0), h('span',{style:{fontSize:11,color:'var(--muted)'}},'الجولات')),
-        h('div',{style:{borderRight:'1px solid var(--line)'}}, h('b',{style:{fontSize:18,display:'block'}}, Math.round(last?.volume||0)), h('span',{style:{fontSize:11,color:'var(--muted)'}},'الحجم كجم'))
-      )
-    )
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+        h('div',null,
+          h('span',{style:{display:'block',color:'var(--muted)',fontSize:12}},'تمرين اليوم'),
+          h('b',{style:{fontSize:20}}, todayWorkout.name)
+        ),
+        h(AF.PrimaryBtn,{onClick:()=>openWorkout(todayWorkout.id)}, 'ابدأ الآن')
+      ),
+      last ? h('div',{style:{marginTop:14,paddingTop:14,borderTop:'1px solid var(--line)',display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}},
+        h('div',null, h('b',{style:{fontSize:16,display:'block'}}, last.name), h('span',{style:{fontSize:11,color:'var(--muted)'}},'آخر تمرين')),
+        h('div',{style:{borderRight:'1px solid var(--line)'}}, h('b',{style:{fontSize:16,display:'block'}}, last.durationMin?last.durationMin+' د':'—'), h('span',{style:{fontSize:11,color:'var(--muted)'}},'المدة')),
+        h('div',{style:{borderRight:'1px solid var(--line)'}}, h('b',{style:{fontSize:16,display:'block'}}, Math.round(last.volume)), h('span',{style:{fontSize:11,color:'var(--muted)'}},'الحجم كجم'))
+      ) : null
+    ),
+
+    h('button',{onClick:()=>showScreen('coach'), style:{
+      width:'100%', marginTop:14, border:0, borderRadius:18, padding:18, cursor:'pointer',
+      background:'linear-gradient(135deg, var(--violet), var(--accent2))', color:'#fff', fontWeight:800,
+      display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:15
+    }}, h('span',null,'🤖 المدرب الذكي الأسبوعي'), h('span',null,'التحليل والتوصيات ›'))
   );
 };

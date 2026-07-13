@@ -7,7 +7,7 @@ const ASSETS=[
   './hooks/useAppState.js',
   './components/Charts.jsx','./components/UI.jsx',
   './pages/Home.jsx','./pages/Workouts.jsx','./pages/Library.jsx','./pages/ScheduleEditor.jsx',
-  './pages/Session.jsx','./pages/Progress.jsx','./pages/Nutrition.jsx','./pages/Settings.jsx'
+  './pages/Session.jsx','./pages/Progress.jsx','./pages/Nutrition.jsx','./pages/Settings.jsx','./pages/Coach.jsx'
 ];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));

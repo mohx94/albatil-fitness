@@ -8,9 +8,12 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
   });
   const [targets, setTargets] = React.useState(c.nutrition.targets);
   const today = AF.dateKey(new Date());
-  const tb = c.dailyBurn?.[today] || {steps:0,burn:0};
-  const [burnForm, setBurnForm] = React.useState({steps:tb.steps||'', burn:tb.burn||''});
+  const tb = c.dailyLog?.[today] || c.dailyBurn?.[today] || {sleep:'',steps:0,burn:0};
+  const [burnForm, setBurnForm] = React.useState({sleep:tb.sleep||'', steps:tb.steps||'', burn:tb.burn||''});
   const fileRef = React.useRef(null);
+  const [injuryForm, setInjuryForm] = React.useState({part:'الظهر', pain:3, note:''});
+  const [goalsForm, setGoalsForm] = React.useState(c.weeklyGoals || {workouts:3, proteinDays:7, weightLossKg:0.5, steps:60000});
+  const muscleGroups = Array.from(new Set(AF.WORKOUTS.flatMap(w=>w.groups.map(([g])=>g))));
 
   const saveSettings = (e)=>{
     e.preventDefault();
@@ -38,10 +41,28 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
 
   const saveBurn = ()=>{
     mutate((next,p)=>{
-      if(!p.dailyBurn) p.dailyBurn={};
-      p.dailyBurn[today] = {steps:+burnForm.steps||0, burn:+burnForm.burn||0};
+      if(!p.dailyLog) p.dailyLog={};
+      p.dailyLog[today] = {sleep:+burnForm.sleep||null, steps:+burnForm.steps||0, burn:+burnForm.burn||0};
     });
     toast('تم الحفظ');
+  };
+
+  const addInjury = ()=>{
+    mutate((next,p)=>{
+      if(!p.injuries) p.injuries=[];
+      p.injuries.push({id:'inj_'+Date.now(), part:injuryForm.part, pain:+injuryForm.pain, note:injuryForm.note.trim(), date:new Date().toISOString()});
+    });
+    setInjuryForm({part:'الظهر', pain:3, note:''});
+    toast('تم تسجيل الإصابة');
+  };
+  const removeInjury = (id)=>mutate((next,p)=>{ p.injuries = (p.injuries||[]).filter(i=>i.id!==id); });
+
+  const saveGoals = ()=>{
+    mutate((next,p)=>{ p.weeklyGoals = {
+      workouts:+goalsForm.workouts||3, proteinDays:+goalsForm.proteinDays||7,
+      weightLossKg:+goalsForm.weightLossKg||0.5, steps:+goalsForm.steps||60000
+    };});
+    toast('تم حفظ الأهداف الأسبوعية');
   };
 
   const switchProfile = (id)=>{
@@ -168,6 +189,7 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
 
     h(AF.Panel,null, h(AF.SectionTitle,{title:'خطوات النشاط اليومية', right:'يدويًا'}),
       h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'ساعات النوم', h('input',{type:'number', step:'0.5', value:burnForm.sleep, onChange:e=>setBurnForm(f=>({...f,sleep:e.target.value})), placeholder:'0', style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
         h('label',{style:{fontSize:12,color:'var(--muted)'}},'الخطوات', h('input',{type:'number', value:burnForm.steps, onChange:e=>setBurnForm(f=>({...f,steps:e.target.value})), placeholder:'0', style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
         h('label',{style:{fontSize:12,color:'var(--muted)'}},'سعرات محروقة إضافية', h('input',{type:'number', value:burnForm.burn, onChange:e=>setBurnForm(f=>({...f,burn:e.target.value})), placeholder:'0', style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
       ),
@@ -175,6 +197,31 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
       h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}},
         '⚠️ مزامنة تلقائية حقيقية مع Huawei Health / Google Fit / Apple Health مو ممكنة من تطبيق ويب عادي — تتطلب تطبيق جوّال أصلي (Native) مرتبط بحسابها رسميًا. لحين ذاك انسخ الخطوات/السعرات المحروقة يدويًا وبنضيفها لميزانية سعراتك.'
       )
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'الإصابات', right:'يمنع اقتراح تمارين العضلة المصابة'}),
+      h('div',{style:{display:'grid',gap:8,marginBottom:12}},
+        (c.injuries||[]).length ? (c.injuries||[]).map(inj=>h('div',{key:inj.id, style:{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:14,padding:12}},
+          h('div',null, h('b',null, inj.part), h('small',{style:{color:'var(--muted)',marginRight:8}}, `ألم ${inj.pain}/5${inj.note?' · '+inj.note:''}`)),
+          h('button',{onClick:()=>removeInjury(inj.id), style:{border:0,background:'transparent',color:'var(--danger)',cursor:'pointer',fontSize:16}}, '🗑')
+        )) : h('div',{style:{color:'var(--muted)',fontSize:13}}, 'لا توجد إصابات مسجلة')
+      ),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'العضلة/المنطقة', h('select',{value:injuryForm.part, onChange:e=>setInjuryForm(f=>({...f,part:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}, muscleGroups.map(g=>h('option',{key:g,value:g},g)))),
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},`درجة الألم: ${injuryForm.pain}/5`, h('input',{type:'range', min:1, max:5, value:injuryForm.pain, onChange:e=>setInjuryForm(f=>({...f,pain:+e.target.value})), style:{width:'100%',marginTop:12}})),
+        h('label',{style:{fontSize:12,color:'var(--muted)',gridColumn:'1/-1'}},'ملاحظة (اختياري)', h('input',{value:injuryForm.note, onChange:e=>setInjuryForm(f=>({...f,note:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
+      ),
+      h(AF.SecondaryBtn,{onClick:addInjury, style:{width:'100%',marginTop:10}}, '+ تسجيل إصابة')
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'الأهداف الأسبوعية'}),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'عدد التمارين', h('input',{type:'number', value:goalsForm.workouts, onChange:e=>setGoalsForm(f=>({...f,workouts:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'أيام تحقيق هدف البروتين', h('input',{type:'number', value:goalsForm.proteinDays, onChange:e=>setGoalsForm(f=>({...f,proteinDays:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'هدف نزول الوزن (كجم)', h('input',{type:'number', step:'0.1', value:goalsForm.weightLossKg, onChange:e=>setGoalsForm(f=>({...f,weightLossKg:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
+        h('label',{style:{fontSize:12,color:'var(--muted)'}},'هدف الخطوات', h('input',{type:'number', value:goalsForm.steps, onChange:e=>setGoalsForm(f=>({...f,steps:e.target.value})), style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}}))
+      ),
+      h(AF.SecondaryBtn,{onClick:saveGoals, style:{width:'100%',marginTop:10}}, 'حفظ الأهداف الأسبوعية')
     ),
 
     h(AF.Panel,null, h(AF.SectionTitle,{title:'مشاركة مع المدرّب'}),
