@@ -79,8 +79,15 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
     try{
       const parsed = JSON.parse(await e.target.files[0].text());
       const next = parsed.profiles ? parsed : {activeProfile:'p1', profiles:{p1:parsed}};
+      const check = AF.validateState(next);
+      if(!check.ok){
+        toast('ملف غير صالح: '+check.errors[0]);
+        return;
+      }
+      // auto-backup current data before overwriting, in case the import turns out wrong
+      localStorage.setItem('albatil-fitness-v2-app-backup-'+Date.now(), JSON.stringify(state));
       setState(next); AF.saveState(next);
-      toast('تم استيراد البيانات');
+      toast('تم استيراد البيانات (نسخة احتياطية من بياناتك القديمة محفوظة تلقائيًا)');
     }catch{ toast('ملف غير صالح'); }
   };
 
@@ -179,6 +186,7 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
     ),
 
     h(AF.Panel,null, h(AF.SectionTitle,{title:'المزامنة السحابية', right: cloudUser ? `متصل: ${cloudUser.displayName||cloudUser.email}` : (cloudReason==='no-config' ? '🔧 غير مُعد' : 'غير متصل')}),
+      cloudUser && state.updatedAt ? h('div',{style:{fontSize:12,color:'var(--muted)',marginBottom:10}}, `آخر تحديث محلي: ${new Date(state.updatedAt).toLocaleString('ar-SA')} — يتزامن تلقائيًا`) : null,
       h(AF.SecondaryBtn,{onClick:()=>cloudUser?AF.cloudSignOut():AF.cloudSignIn().catch(()=>toast('تعذر تسجيل الدخول')), style:{width:'100%',marginBottom:10}}, cloudUser?'تسجيل الخروج':'تسجيل الدخول بجوجل'),
       cloudUser ? h('div',{style:{display:'flex',gap:10,flexWrap:'wrap'}},
         h(AF.SecondaryBtn,{onClick:()=>AF.cloudPush(state).then(()=>toast('تم رفع بياناتك ☁️')).catch(()=>toast('تعذر الرفع'))}, '⬆️ رفع بياناتي للسحابة'),

@@ -110,18 +110,35 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
     Object.entries(exercises).forEach(([key, ex])=>{
       const noteVal = ex.notes.trim();
       if(noteVal) notes[key]=noteVal;
-      let exBestWeight=0, exBestReps=0, exVolume=0, exSets=0;
+      let exBestWeight=0, exBestReps=0, exVolume=0, exSets=0, rirSum=0, rirCount=0, bestSetVolume=0, best1RM=0, best1RMSet=null;
       ex.sets.forEach(row=>{
         if(!row.done) return;
-        const weight=+row.weight||0, reps=+row.reps||0;
+        const weight=+row.weight||0, reps=+row.reps||0, rir=row.rir!==''?+row.rir:null;
         sets++; exSets++; volume+=weight*reps; exVolume+=weight*reps;
+        if(rir!=null){ rirSum+=rir; rirCount++; }
         if(weight>exBestWeight || (weight===exBestWeight && reps>exBestReps)){ exBestWeight=weight; exBestReps=reps; }
-        const old = c.prs[key];
-        if(weight && reps && (!old || weight>old.weight || (weight===old.weight && reps>old.reps))){
-          prUpdates[key] = {weight,reps,date:now};
-        }
+        const setVolume = weight*reps;
+        if(setVolume>bestSetVolume) bestSetVolume=setVolume;
+        const oneRM = AF.estimate1RM(weight,reps);
+        if(oneRM>best1RM){ best1RM=oneRM; best1RMSet={weight,reps}; }
       });
-      if(exSets) exerciseLogUpdates[key] = {date:now, weight:exBestWeight, reps:exBestReps, volume:exVolume};
+      if(exSets){
+        exerciseLogUpdates[key] = {date:now, weight:exBestWeight, reps:exBestReps, volume:exVolume, avgRir: rirCount? +(rirSum/rirCount).toFixed(1) : null};
+        const oldPr = c.prs[key] || {};
+        const newPr = {...oldPr};
+        if(!oldPr.maxWeight || exBestWeight>oldPr.maxWeight.weight || (exBestWeight===oldPr.maxWeight.weight && exBestReps>oldPr.maxWeight.reps)){
+          newPr.maxWeight = {weight:exBestWeight, reps:exBestReps, date:now};
+        }
+        if(!oldPr.best1RM || best1RM>oldPr.best1RM.value){
+          newPr.best1RM = {value:best1RM, weight:best1RMSet?.weight||0, reps:best1RMSet?.reps||0, date:now};
+        }
+        if(!oldPr.bestVolumeSet || bestSetVolume>oldPr.bestVolumeSet){
+          newPr.bestVolumeSet = bestSetVolume;
+        }
+        // legacy shape kept for back-compat with older PR displays
+        newPr.weight = newPr.maxWeight.weight; newPr.reps = newPr.maxWeight.reps; newPr.date = now;
+        prUpdates[key] = newPr;
+      }
     });
     if(!sets){ toast('سجّل جولة واحدة على الأقل'); return; }
     mutate((next,p)=>{
@@ -181,15 +198,18 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
         const ex = exercises[key];
         if(!ex) return null;
         const pr = c.prs[key];
+        const prLabel = pr ? `PR ${pr.maxWeight?pr.maxWeight.weight:pr.weight}×${pr.maxWeight?pr.maxWeight.reps:pr.reps}` : 'لا يوجد PR';
         const info = AF.EX_INFO[name];
         const suggestion = !draft?.exercises?.[key] ? AF.suggestedWeight(c.exerciseLogs[key], reps, deload) : null;
+        const coachNote = !draft?.exercises?.[key] ? AF.smartCoachNote(key, c.exerciseLogs[key], reps) : null;
         return h('article',{key, style:{background:'var(--surface)',border:'1px solid var(--line)',borderRadius:20,padding:16,marginBottom:12}},
           h('div',{style:{display:'flex',justifyContent:'space-between',gap:8,alignItems:'flex-start',marginBottom:6}},
             h('div',null, h('h3',{style:{margin:0}}, name), h('small',{style:{color:'var(--muted)'}}, `${setsCount} جولات × ${reps}`)),
-            h('small',{style:{color:'var(--accent)'}}, pr?`PR ${pr.weight}×${pr.reps}`:'لا يوجد PR')
+            h('small',{style:{color:'var(--accent)'}}, prLabel)
           ),
           h('div',{style:{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:10}},
             suggestion ? h('span',{style:{fontSize:11,color:'var(--gold)',background:'rgba(244,196,105,.1)',border:'1px solid rgba(244,196,105,.25)',borderRadius:99,padding:'4px 10px'}}, `🎯 مقترح: ${suggestion} كجم`) : null,
+            coachNote ? h('span',{style:{fontSize:11,color:'var(--accent2)',background:'rgba(91,140,255,.1)',border:'1px solid rgba(91,140,255,.25)',borderRadius:99,padding:'4px 10px'}}, `🧠 ${coachNote}`) : null,
             info ? h('button',{onClick:()=>setOpenDetail(prev=>({...prev,[key]:!prev[key]})), style:{fontSize:11,color:'var(--accent2)',background:'transparent',border:'1px solid var(--line)',borderRadius:99,padding:'4px 10px',cursor:'pointer'}}, 'ℹ️ التفاصيل والبدائل') : null
           ),
           (info && openDetail[key]) ? h('div',{style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,padding:'10px 12px',marginBottom:10,fontSize:12,color:'var(--muted)'}},

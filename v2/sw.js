@@ -1,4 +1,4 @@
-const CACHE='albatil-fitness-v2-app';
+const CACHE='albatil-fitness-v2-app-v2';
 const ASSETS=[
   './','./index.html','./manifest.webmanifest','./icon.svg',
   './App.jsx',
@@ -10,7 +10,6 @@ const ASSETS=[
   './pages/Session.jsx','./pages/Progress.jsx','./pages/Nutrition.jsx','./pages/Settings.jsx'
 ];
 self.addEventListener('install',e=>{
-  self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
 });
 self.addEventListener('activate',e=>{
@@ -19,8 +18,19 @@ self.addEventListener('activate',e=>{
     self.clients.claim()
   ]));
 });
+self.addEventListener('message',e=>{
+  if(e.data==='skipWaiting') self.skipWaiting();
+});
+function isCacheable(req){
+  const url = new URL(req.request ? req.request.url : req.url);
+  if(url.origin !== self.location.origin) return false; // never cache firebase/gstatic/camera/etc
+  return true;
+}
 self.addEventListener('fetch',e=>{
   const req=e.request;
+  if(new URL(req.url).origin !== self.location.origin){
+    return; // let cross-origin requests (Firebase, fonts, camera) pass straight through, uncached
+  }
   if(req.mode==='navigate'||req.destination==='document'){
     e.respondWith(
       fetch(req).then(res=>{ caches.open(CACHE).then(c=>c.put(req,res.clone())); return res; })

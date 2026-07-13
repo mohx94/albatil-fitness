@@ -20,6 +20,13 @@ AF.App = function(){
   const [toastMsg, setToastMsg] = React.useState(null);
   const [theme, setThemeState] = React.useState(()=>localStorage.getItem('albatil-theme')||'dark');
   const [notifEnabled, setNotifEnabled] = React.useState(()=>('Notification' in window && Notification.permission==='granted'));
+  const [updateAvailable, setUpdateAvailable] = React.useState(false);
+
+  React.useEffect(()=>{
+    const onUpdate = ()=>setUpdateAvailable(true);
+    window.addEventListener('sw-update-available', onUpdate);
+    return ()=>window.removeEventListener('sw-update-available', onUpdate);
+  },[]);
 
   React.useEffect(()=>{ document.documentElement.dataset.theme = theme; localStorage.setItem('albatil-theme', theme); },[theme]);
 
@@ -68,6 +75,13 @@ AF.App = function(){
   const navScreen = ['session','library','editSchedule'].includes(screen) ? null : screen;
 
   return h('div',{style:{maxWidth:720,margin:'auto',minHeight:'100vh',padding:'18px 16px 96px'}},
+    updateAvailable ? h('div',{style:{
+      position:'fixed',top:0,left:0,right:0,zIndex:50,background:'var(--accent2)',color:'#fff',
+      padding:'10px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:13,fontWeight:700
+    }},
+      h('span',null,'🔄 تحديث جديد للتطبيق متوفر'),
+      h('button',{onClick:()=>window.__swReloadForUpdate(), style:{border:0,background:'#fff',color:'var(--accent2)',borderRadius:99,padding:'6px 14px',fontWeight:800,cursor:'pointer'}}, 'تحديث الآن')
+    ) : null,
     h(AF.TopBar,{profileName:c.name||'الملف', onProfileClick:()=>showScreen('settings')}),
     h('main',null, pageEl),
     navScreen ? h(AF.BottomNav,{active:navScreen, onNav:showScreen}) : null,

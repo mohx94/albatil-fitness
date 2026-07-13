@@ -11,6 +11,7 @@ AF.useAppState = function(){
   stateRef.current = state;
 
   const persist = React.useCallback((next)=>{
+    next.updatedAt = Date.now();
     setState(next);
     AF.saveState(next);
     if(AF.cloud.user){ AF.cloudPush(next).catch(()=>{}); }
@@ -28,9 +29,14 @@ AF.useAppState = function(){
       setCloudUser(user||null);
       if(user){
         AF.cloudPull().then(remote=>{
-          if(remote) persist(remote);
+          if(remote && AF.validateState(remote).ok && (remote.updatedAt||0) > (stateRef.current.updatedAt||0)){
+            setState(remote); AF.saveState(remote);
+          }
         }).catch(()=>{});
         AF.cloudSubscribe((remote)=>{
+          if(!remote || !AF.validateState(remote).ok) return;
+          // never let an older remote snapshot clobber newer local edits
+          if((remote.updatedAt||0) <= (stateRef.current.updatedAt||0)) return;
           setState(remote);
           AF.saveState(remote);
         });

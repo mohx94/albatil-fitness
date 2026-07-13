@@ -1,6 +1,34 @@
 window.AF = window.AF || {};
 window.h = React.createElement;
 
+AF.SCHEMA_VERSION = 2;
+
+AF.estimate1RM = function(weight, reps){
+  if(!weight||!reps) return 0;
+  return Math.round(weight*(1+reps/30)*10)/10;
+};
+
+// Basic structural + sanity validation before trusting an imported/remote state blob.
+AF.validateState = function(state){
+  const errors = [];
+  if(!state || typeof state!=='object') return {ok:false, errors:['الملف فارغ أو غير صالح']};
+  if(!state.profiles || typeof state.profiles!=='object') errors.push('لا يوجد profiles');
+  else{
+    Object.entries(state.profiles).forEach(([id,p])=>{
+      if(!p.profile) { errors.push(`الملف ${id} بدون بيانات profile`); return; }
+      const w = p.profile.weight;
+      if(w!=null && (w<20||w>400)) errors.push(`وزن غير منطقي بالملف ${id}: ${w}`);
+      if(!Array.isArray(p.history)) errors.push(`history غير صالح بالملف ${id}`);
+      if(!Array.isArray(p.measurements)) errors.push(`measurements غير صالح بالملف ${id}`);
+      (p.history||[]).forEach(hh=>{
+        if(hh.sets!=null && (hh.sets<0||hh.sets>200)) errors.push('عدد جولات غير منطقي بسجل تمرين');
+      });
+    });
+  }
+  if(!state.activeProfile) errors.push('لا يوجد activeProfile');
+  return {ok:errors.length===0, errors};
+};
+
 AF.dateKey = function(d){ return new Date(d).toISOString().slice(0,10); };
 
 AF.computeStreak = function(history){
@@ -47,9 +75,36 @@ AF.suggestedWeight = function(logs,repsRange,deload){
   const last = logs[logs.length-1];
   if(!last.weight) return null;
   const maxRep = parseInt(String(repsRange).split('-').pop())||last.reps;
-  let base = last.reps>=maxRep ? +(last.weight+(last.weight>=40?2.5:1)).toFixed(1) : last.weight;
+  const minRep = parseInt(String(repsRange).split('-')[0])||last.reps;
+  const rir = last.avgRir;
+  let base = last.weight;
+  if(last.reps>=maxRep){
+    // Hit or beat top of rep range: how much to add depends on how much gas was left (RIR)
+    if(rir!=null && rir<=1) base = last.weight + (last.weight>=40?5:2); // near failure, big room to grow
+    else if(rir!=null && rir>=3) base = last.weight + (last.weight>=40?1.25:0.5); // lots left, grow gently (was probably too light)
+    else base = last.weight + (last.weight>=40?2.5:1); // default progression
+  } else if(last.reps<minRep){
+    base = last.weight; // missed the range, hold steady rather than push further
+  } else {
+    base = last.weight; // within range but not at top, hold until they hit max reps
+  }
+  base = +base.toFixed(1);
   if(deload) base = +(base*0.85).toFixed(1);
   return base;
+};
+
+AF.smartCoachNote = function(key, logs, repsRange){
+  if(!logs || logs.length<1) return null;
+  const last = logs[logs.length-1];
+  const maxRep = parseInt(String(repsRange).split('-').pop())||last.reps;
+  const rir = last.avgRir;
+  if(last.reps>=maxRep && rir!=null && rir<=1){
+    return `أكملت أعلى نطاق العدات (${last.reps}) بأقل جهد متبقي (RIR ${rir}) — جاهز لقفزة وزن أكبر المرة الجاية.`;
+  }
+  if(last.reps<parseInt(String(repsRange).split('-')[0])){
+    return `آخر مرة ما وصلت أقل نطاق العدات — حافظ على نفس الوزن وركّز على الأداء قبل ما تزيد.`;
+  }
+  return null;
 };
 
 AF.linearForecast = function(points){

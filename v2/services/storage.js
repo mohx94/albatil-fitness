@@ -35,7 +35,18 @@ function migrateFrom(raw){
 AF.loadState = function(){
   try{
     const own = JSON.parse(localStorage.getItem(AF.KEY)||"null");
-    if(own && own.profiles) return own;
+    if(own && own.profiles){
+      const check = AF.validateState ? AF.validateState(own) : {ok:true};
+      if(check.ok) return own;
+      // corrupted own state: try most recent auto-backup before falling further back
+      try{
+        const backupKeys = Object.keys(localStorage).filter(k=>k.startsWith(AF.KEY+'-backup-')).sort().reverse();
+        for(const bk of backupKeys){
+          const cand = JSON.parse(localStorage.getItem(bk)||"null");
+          if(cand && AF.validateState(cand).ok) return cand;
+        }
+      }catch{}
+    }
   }catch{}
   try{
     const prevV2 = JSON.parse(localStorage.getItem(AF.OLD_KEY_V2)||"null");

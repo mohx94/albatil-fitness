@@ -88,7 +88,9 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
       weekSessions: weekSessions.length, weekVolume: Math.round(weekVol),
       monthSessions: monthSessions.length, monthVolume: Math.round(monthVol),
       volumeByMuscleThisWeek: Object.fromEntries(muscleEntries.map(([m,v])=>[m,Math.round(v)])),
-      streak, prs: Object.fromEntries(Object.entries(c.prs).slice(0,8).map(([k,v])=>[k.split('__')[1], `${v.weight}x${v.reps}`])),
+      streak, prs: Object.fromEntries(Object.entries(c.prs).slice(0,8).map(([k,v])=>[k.split('__')[1], `أقوى وزن: ${(v.maxWeight||v).weight}x${(v.maxWeight||v).reps}${v.best1RM?`, تقدير 1RM: ${v.best1RM.value}`:''}`])),
+      recentSetRir: Object.fromEntries(Object.entries(c.exerciseLogs).slice(0,8).map(([k,logs])=>[k.split('__')[1], logs.slice(-1)[0]?.avgRir ?? null])),
+      currentProgramWeek: c.mesocycle?.week||1, isDeloadWeek: (c.mesocycle?.week||1)===4,
       recentWeights: c.measurements.slice(-6).map(m=>({date:AF.dateKey(m.date), weight:m.weight})),
       lastWorkouts: c.history.slice(-6).map(hh=>({date:AF.dateKey(hh.date), name:hh.name, volume:Math.round(hh.volume)})),
       nutritionTargets: c.nutrition.targets,
@@ -146,12 +148,13 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
       ),
       h(AF.Panel,null, h(AF.SectionTitle,{title:'أفضل الأرقام', right:'PR'}),
         h('div',{style:{display:'grid',gap:8,marginTop:12}},
-          Object.entries(c.prs).sort((a,b)=>new Date(b[1].date)-new Date(a[1].date)).slice(0,12).map(([k,v])=>
-            h('div',{key:k, style:{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:14,padding:12}},
-              h('div',null, h('b',null, AF.exerciseLabel(k)), h('br'), h('small',{style:{color:'var(--muted)'}}, new Date(v.date).toLocaleDateString('ar-SA'))),
-              h('b',null, `${v.weight} × ${v.reps}`)
-            )
-          )
+          Object.entries(c.prs).sort((a,b)=>new Date(b[1].date)-new Date(a[1].date)).slice(0,12).map(([k,v])=>{
+            const mw = v.maxWeight || {weight:v.weight, reps:v.reps};
+            return h('div',{key:k, style:{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:14,padding:12}},
+              h('div',null, h('b',null, AF.exerciseLabel(k)), h('br'), h('small',{style:{color:'var(--muted)'}}, new Date(v.date).toLocaleDateString('ar-SA'), v.best1RM? ` · 1RM‏‏ تقديري: ${v.best1RM.value} كجم`:'')),
+              h('b',null, `${mw.weight} × ${mw.reps}`)
+            );
+          })
         )
       )
     ) : null,
