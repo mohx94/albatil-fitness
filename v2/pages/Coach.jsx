@@ -158,7 +158,9 @@ ${JSON.stringify(buildUserContext())}
 - لو قال المستخدم إنه يحس بإجهاد أو ضعف بعضلة معينة، اربط ردك ببياناته الفعلية (مثل sleepLast7Days أو recentWeightJumps أو muscleVolumeChangePercent) قبل ما تفسّر — مثال: "طبيعي تحس بإجهاد، نومك آخر يومين كان أقل من 6 ساعات" أو "لاحظت قفزت بوزن كذا 20% مرة وحدة، هذا سبب محتمل".
 - لو تقدر تقترح تعديل أهداف التغذية (سعرات/بروتين/كارب/دهون)، اسأل المستخدم أولاً ووضح السبب، وفقط لو وافق صراحة بآخر رسالة ضمّن ردك سطر بهذا الشكل بالضبط: UPDATE_TARGETS: {"calories":رقم,"protein":رقم,"carb":رقم,"fat":رقم}
 - لو قال المستخدم عضلة معينة ضعيفة أو ناقصة بجدوله، اقترح تمرين إضافي مناسب لها من نفس يوم تدريبها (استخدم workoutsSchedule لتعرف الأيام والعضلات)، اشرح ليش، واسأله يوافق. فقط لو وافق صراحة بآخر رسالة ضمّن ردك سطر بهذا الشكل بالضبط: ADD_EXERCISE: {"workoutId":"معرف اليوم من workoutsSchedule","muscle":"اسم العضلة بالعربي","name":"اسم التمرين بالإنجليزي أو العربي","sets":3,"reps":"10-12"}
-- لا تكتب أي سطر UPDATE_TARGETS أو ADD_EXERCISE إلا لما يكون في نيتك فعلاً تنفيذ تعديل بعد موافقة صريحة من المستخدم بنفس المحادثة.
+- لو طلب المستخدم تغيير تمرين موجود (تبديل اسمه أو عدد مجموعاته/تكراراته)، اقترح ذلك وبعد موافقة صريحة ضمّن سطر: EDIT_EXERCISE: {"workoutId":"معرف اليوم","oldName":"اسم التمرين الحالي بالضبط","newName":"الاسم الجديد أو نفس القديم","sets":3,"reps":"10-12"}
+- لو طلب المستخدم حذف تمرين من جدوله، اقترح ذلك وبعد موافقة صريحة ضمّن سطر: REMOVE_EXERCISE: {"workoutId":"معرف اليوم","name":"اسم التمرين بالضبط"}
+- لا تكتب أي سطر UPDATE_TARGETS أو ADD_EXERCISE أو EDIT_EXERCISE أو REMOVE_EXERCISE إلا لما يكون في نيتك فعلاً تنفيذ تعديل بعد موافقة صريحة من المستخدم بنفس المحادثة.
 - خلك مختصر ومباشر، بدون مقدمات طويلة.`;
     try{
       const res = await AF.callAI({ system, messages: nextMsgs });
@@ -218,8 +220,8 @@ ${JSON.stringify(buildUserContext())}
         !chatMsgs.length ? h('div',{style:{fontSize:12,color:'var(--muted)',textAlign:'center',padding:'10px 0'}}, 'اسأله عن أي شي: خطة، تغذية، أو معلومة سمعتها بالسوشيال ميديا 👇') : null,
         chatMsgs.map((m,i)=>{
           if(m.role==='user') return h('div',{key:i, style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:'14px 14px 4px 14px',padding:'10px 14px',fontSize:13,maxWidth:'85%',marginRight:'auto'}}, m.content);
-          const parts = m.content.split(/(?:UPDATE_TARGETS|ADD_EXERCISE):\s*(\{[^}]+\})/);
-          const markerMatches = [...m.content.matchAll(/(UPDATE_TARGETS|ADD_EXERCISE):\s*\{[^}]+\}/g)].map(mm=>mm[1]);
+          const parts = m.content.split(/(?:UPDATE_TARGETS|ADD_EXERCISE|EDIT_EXERCISE|REMOVE_EXERCISE):\s*(\{[^}]+\})/);
+          const markerMatches = [...m.content.matchAll(/(UPDATE_TARGETS|ADD_EXERCISE|EDIT_EXERCISE|REMOVE_EXERCISE):\s*\{[^}]+\}/g)].map(mm=>mm[1]);
           let markerIdx = -1;
           return h('div',{key:i, style:{background:'rgba(139,123,255,.1)',border:'1px solid rgba(139,123,255,.3)',borderRadius:'14px 14px 14px 4px',padding:'10px 14px',maxWidth:'92%'}},
             h('div',{style:{fontSize:10,fontWeight:800,color:'#8b7bff',marginBottom:4}}, '🤖 AI'),
@@ -233,6 +235,20 @@ ${JSON.stringify(buildUserContext())}
                   h('small',{style:{color:'var(--muted)',display:'block',marginBottom:6}}, `اقتراح إضافة تمرين: ${vals.name} — ${vals.sets}×${vals.reps} (${vals.muscle})`),
                   h('div',{style:{display:'flex',gap:8}},
                     h(AF.PrimaryBtn,{onClick:()=>applyAddExercise(vals), style:{flex:1,padding:'8px 12px',fontSize:12}}, '✅ قبول'),
+                    h(AF.GhostBtn,{onClick:()=>{}, style:{flex:1,padding:'8px 12px',fontSize:12}}, '✕ تجاهل')
+                  )
+                );
+                if(kind==='EDIT_EXERCISE') return h('div',{key:pi, style:{marginTop:8,background:'var(--surface2)',border:'1px solid var(--gold)',borderRadius:12,padding:10}},
+                  h('small',{style:{color:'var(--muted)',display:'block',marginBottom:6}}, `اقتراح تعديل: ${vals.oldName} ← ${vals.newName||vals.oldName} (${vals.sets}×${vals.reps})`),
+                  h('div',{style:{display:'flex',gap:8}},
+                    h(AF.PrimaryBtn,{onClick:()=>applyEditExercise(vals), style:{flex:1,padding:'8px 12px',fontSize:12}}, '✅ قبول'),
+                    h(AF.GhostBtn,{onClick:()=>{}, style:{flex:1,padding:'8px 12px',fontSize:12}}, '✕ تجاهل')
+                  )
+                );
+                if(kind==='REMOVE_EXERCISE') return h('div',{key:pi, style:{marginTop:8,background:'var(--surface2)',border:'1px solid var(--gold)',borderRadius:12,padding:10}},
+                  h('small',{style:{color:'var(--muted)',display:'block',marginBottom:6}}, `اقتراح حذف: ${vals.name}`),
+                  h('div',{style:{display:'flex',gap:8}},
+                    h(AF.PrimaryBtn,{onClick:()=>applyRemoveExercise(vals), style:{flex:1,padding:'8px 12px',fontSize:12}}, '✅ قبول'),
                     h(AF.GhostBtn,{onClick:()=>{}, style:{flex:1,padding:'8px 12px',fontSize:12}}, '✕ تجاهل')
                   )
                 );

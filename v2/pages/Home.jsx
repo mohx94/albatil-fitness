@@ -144,32 +144,6 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
       )
     ),
 
-    h(AF.Panel,{style:{borderColor:'rgba(201,162,39,.35)'}},
-      h(AF.SectionTitle,{title:'🏋️ لوحة التمارين', right:'تمرين اليوم'}),
-      h('div',{style:{display:'flex',alignItems:'center',gap:18}},
-        h(AF.RingChart,{percent:weekPct, label:weekSessionsCount, sub:`/ ${weeklyGoalCount}`, size:76, color:'#c9a227'}),
-        h('div',{style:{flex:1}},
-          h('span',{style:{color:'var(--muted)',fontSize:11,display:'block',marginBottom:4}},'حصص هذا الأسبوع'),
-          h('b',{style:{fontSize:20,display:'block'}}, todayWorkout.name),
-          h('span',{style:{color:'var(--muted)',fontSize:12}}, `الالتزام: ${streak} ${streak===1?'يوم':'أيام'}`)
-        ),
-        h(AF.PrimaryBtn,{onClick:()=>openWorkout(todayWorkout.id)}, 'ابدأ الآن')
-      ),
-      h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',marginTop:12,paddingTop:12,borderTop:'1px solid var(--line)'}},
-        h('span',{style:{fontSize:11,color:'var(--muted)',alignSelf:'center'}}, 'أو اختر يومك بنفسك:'),
-        workouts.map(w=>h('button',{key:w.id, onClick:()=>openWorkout(w.id), style:{
-          fontSize:12,border:'1px solid '+(w.id===todayWorkout.id?'var(--accent)':'var(--line)'),
-          background:w.id===todayWorkout.id?'rgba(var(--accent-rgb),.12)':'var(--surface2)',
-          color:'var(--text)',borderRadius:99,padding:'6px 14px',cursor:'pointer'
-        }}, w.name))
-      ),
-      last ? h('div',{style:{marginTop:14,paddingTop:14,borderTop:'1px solid var(--line)',display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}},
-        h('div',null, h('b',{style:{fontSize:16,display:'block'}}, last.name), h('span',{style:{fontSize:11,color:'var(--muted)'}},'آخر تمرين')),
-        h('div',{style:{borderRight:'1px solid var(--line)'}}, h('b',{style:{fontSize:16,display:'block'}}, last.durationMin?last.durationMin+' د':'—'), h('span',{style:{fontSize:11,color:'var(--muted)'}},'المدة')),
-        h('div',{style:{borderRight:'1px solid var(--line)'}}, h('b',{style:{fontSize:16,display:'block'}}, Math.round(last.volume)), h('span',{style:{fontSize:11,color:'var(--muted)'}},'الحجم كجم'))
-      ) : null
-    ),
-
     h(AF.Panel,{style:{cursor:'pointer',borderColor:'rgba(47,163,116,.35)'}},
       h('div',{onClick:()=>showScreen('nutrition')},
         h(AF.SectionTitle,{title:'🍗 لوحة الأكل', right:'اليوم'}),
