@@ -75,6 +75,8 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
   const ms = c.measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
   const firstWeight = ms[0]?.weight;
   const weightDelta = (firstWeight!=null) ? +(p.weight-firstWeight).toFixed(1) : null;
+  const xpInfo = AF.computeXP(c);
+  const initial = (c.name||'A').trim().charAt(0);
 
   return h(React.Fragment, null,
     draft ? h('div',{style:{
@@ -89,9 +91,30 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
       h(AF.PrimaryBtn,{onClick:()=>openWorkout(draft.id,true)}, 'استئناف')
     ) : null,
 
-    h('div',{style:{margin:'4px 0 14px'}},
-      h('p',{style:{color:'var(--muted)',margin:0}}, `هلا ${c.name||''} 👋 · ${today.toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'long'})}`),
-      h('h2',{style:{margin:'4px 0 0'}}, '🔥 اليوم')
+    h('div',{style:{
+      position:'relative', overflow:'hidden', borderRadius:28, padding:'22px 20px', marginBottom:16,
+      background:'radial-gradient(circle at 15% -20%, rgba(var(--gold-rgb),.22), transparent 55%), linear-gradient(150deg, var(--surface), var(--panel-end))',
+      border:'1px solid var(--line)', boxShadow:'var(--shadow)'
+    }},
+      h('div',{style:{display:'flex',alignItems:'center',gap:14}},
+        h('div',{style:{width:56,height:56,borderRadius:18,flex:'0 0 auto',background:'linear-gradient(135deg, var(--gold), var(--accent2))',display:'grid',placeItems:'center',fontSize:22,fontWeight:900,color:'var(--bg)'}}, initial),
+        h('div',{style:{flex:1,minWidth:0}},
+          h('p',{style:{color:'var(--muted)',margin:0,fontSize:12}}, today.toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'long'})),
+          h('h2',{style:{margin:'2px 0 0',fontSize:22}}, `هلا ${c.name||''} 👋`)
+        ),
+        h('div',{style:{textAlign:'center',flex:'0 0 auto'}},
+          h('span',{style:{display:'block',fontSize:11,color:'var(--muted)'}},'LEVEL'),
+          h('b',{style:{fontSize:22,color:'var(--gold)'}}, xpInfo.level)
+        )
+      ),
+      h('div',{style:{display:'flex',gap:10,marginTop:16}},
+        h('div',{style:{flex:1,background:'rgba(var(--gold-rgb),.08)',border:'1px solid rgba(var(--gold-rgb),.25)',borderRadius:16,padding:'10px 14px',display:'flex',alignItems:'center',gap:8}},
+          h('span',{style:{fontSize:20}},'🔥'), h('div',null, h('b',{style:{display:'block',fontSize:16}},streak), h('small',{style:{color:'var(--muted)',fontSize:10}},streak===1?'يوم التزام':'أيام التزام'))
+        ),
+        h('div',{style:{flex:1,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:16,padding:'10px 14px',display:'flex',alignItems:'center',gap:8}},
+          h('span',{style:{fontSize:20}},'🏋️'), h('div',null, h('b',{style:{display:'block',fontSize:16}},todayWorkout.name), h('small',{style:{color:'var(--muted)',fontSize:10}},'تمرين اليوم'))
+        )
+      )
     ),
 
     h('button',{onClick:()=>showScreen('coach'), style:{
@@ -108,11 +131,14 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
     h(AF.Panel,{style:{marginBottom:14}},
       h(AF.SectionTitle,{title:'📊 تحليل اليوم'}),
       h('div',{style:{display:'grid',gap:8,marginTop:6}},
-        dailyAnalysis.map((it,i)=>h('div',{key:i, style:{display:'flex',gap:8,alignItems:'center',fontSize:13}}, h('span',null,it.icon), h('span',null,it.text)))
+        dailyAnalysis.map((it,i)=>h('div',{key:i, style:{display:'flex',gap:10,alignItems:'center',fontSize:13}},
+          h('span',{style:{width:26,height:26,borderRadius:9,background:'var(--surface2)',display:'grid',placeItems:'center',flex:'0 0 auto'}},it.icon),
+          h('span',null,it.text)
+        ))
       )
     ),
 
-    h(AF.Panel,null,
+    h(AF.Panel,{style:{borderColor:'rgba(201,162,39,.35)'}},
       h(AF.SectionTitle,{title:'🏋️ لوحة التمارين', right:'تمرين اليوم'}),
       h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
         h('div',null,
@@ -136,7 +162,7 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
       ) : null
     ),
 
-    h(AF.Panel,{style:{cursor:'pointer'}},
+    h(AF.Panel,{style:{cursor:'pointer',borderColor:'rgba(47,163,116,.35)'}},
       h('div',{onClick:()=>showScreen('nutrition')},
         h(AF.SectionTitle,{title:'🍗 لوحة الأكل', right:'اليوم'}),
         h('div',{style:{display:'flex',alignItems:'center',gap:18}},
@@ -150,7 +176,7 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
       )
     ),
 
-    h(AF.Panel,{style:{cursor:'pointer'}},
+    h(AF.Panel,{style:{cursor:'pointer',borderColor:'rgba(91,110,232,.35)'}},
       h('div',{onClick:()=>showScreen('progress')},
         h(AF.SectionTitle,{title:'📈 لوحة تغيّر الجسم', right:'التقدم'}),
         h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}},

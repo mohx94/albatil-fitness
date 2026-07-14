@@ -155,8 +155,8 @@ AF.CoachPage = function({cur, getWorkouts, showScreen}){
       ) : h('div',{style:{color:'var(--muted)',fontSize:13}}, 'وضعك متوازن هذا الأسبوع — استمر بنفس الالتزام 👏')
     ),
 
-    h(AF.Panel,null, h(AF.SectionTitle,{title:'تحليل Claude المفصّل'}),
-      h(AF.SecondaryBtn,{onClick:askAI, style:{width:'100%'}}, aiLoading?'جارٍ التحليل...':'احصل على تحليل ذكي مفصّل'),
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'📋 خطة أسبوعية من Claude (ذكاء اصطناعي حقيقي)'}),
+      h(AF.SecondaryBtn,{onClick:askAI, style:{width:'100%'}}, aiLoading?'جارٍ إعداد الخطة...':'احصل على خطتك الأسبوعية'),
       aiText ? h('div',{style:{whiteSpace:'pre-wrap',fontSize:13,color:'var(--text)',background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,padding:12,marginTop:12,lineHeight:1.8}}, aiText) : null
     )
   );
