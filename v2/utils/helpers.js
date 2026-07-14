@@ -35,7 +35,8 @@ AF.satDow = function(d){ return (new Date(d).getDay()+1)%7; };
 
 // Total calories burned today from logged cardio/iron sessions (in-gym) + outside-gym activity.
 // Outside-gym: uses the manual "burn" entry if the user typed one, otherwise auto-estimates from
-// logged steps (~0.045 kcal/step, scaled by body weight vs a 70kg reference).
+// logged steps (~0.045 kcal/step, scaled by body weight vs a 70kg reference). If neither steps nor
+// a manual entry exist yet, falls back to a light baseline estimate so the number is never just zero.
 AF.dailyBurnBreakdown = function(c, dateKey){
   const logs = (c.gymBurnLogs||[]).filter(l=>l.date===dateKey);
   const cardio = logs.filter(l=>l.type==='cardio').reduce((a,l)=>a+l.calories,0);
@@ -44,8 +45,12 @@ AF.dailyBurnBreakdown = function(c, dateKey){
   const steps = c.dailyLog?.[dateKey]?.steps || 0;
   const weight = c.profile?.weight || 70;
   const stepsEstimate = Math.round(steps*0.045*(weight/70));
-  const external = manualBurn>0 ? manualBurn : stepsEstimate;
-  return {cardio, iron, external, externalIsEstimate: manualBurn<=0 && stepsEstimate>0, total: cardio+iron+external};
+  const baseline = Math.round(220*(weight/70)); // light daily-activity floor when nothing else is logged
+  let external, externalIsEstimate;
+  if(manualBurn>0){ external = manualBurn; externalIsEstimate = false; }
+  else if(stepsEstimate>0){ external = stepsEstimate; externalIsEstimate = true; }
+  else { external = baseline; externalIsEstimate = true; }
+  return {cardio, iron, external, externalIsEstimate, total: cardio+iron+external};
 };
 
 AF.computeStreak = function(history){

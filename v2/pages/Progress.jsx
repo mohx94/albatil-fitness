@@ -259,6 +259,28 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
     ) : null,
 
     tab==='analyticsTab' ? h(React.Fragment,null,
+      h(AF.Panel,null,
+        h(AF.SectionTitle,{title:'🔥 حلقات الحرق الأسبوعية', right:'يبدأ الأسبوع من السبت'}),
+        h('div',{style:{display:'flex',justifyContent:'space-between',gap:6,marginTop:10,flexWrap:'wrap'}},
+          (()=>{
+            const dowNamesShort = ['سبت','أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة'];
+            const today0 = new Date();
+            const sinceSat = AF.satDow(today0);
+            const burnGoal = 500;
+            return Array.from({length:sinceSat+1}).map((_,i)=>{
+              const d = new Date(today0); d.setDate(d.getDate()-(sinceSat-i));
+              const dk = AF.dateKey(d);
+              const dayBurn = AF.dailyBurnBreakdown(c, dk);
+              const pct = Math.min(100, Math.round(dayBurn.total/burnGoal*100));
+              const isToday = dk===AF.dateKey(today0);
+              return h('div',{key:dk, style:{textAlign:'center',flex:'1 1 0',minWidth:40}},
+                h(AF.RingChart,{percent:pct, label:dayBurn.total, sub:'', size:48, color: isToday?'var(--accent)':'var(--gold)'}),
+                h('small',{style:{display:'block',marginTop:4,fontSize:10,color:isToday?'var(--text)':'var(--muted)',fontWeight:isToday?800:400}}, dowNamesShort[i])
+              );
+            });
+          })()
+        )
+      ),
       h(AF.Panel,null, h(AF.SectionTitle,{title:'أهداف هذا الأسبوع'}),
         h('div',{style:{display:'grid',gap:10,marginTop:6}},
           [

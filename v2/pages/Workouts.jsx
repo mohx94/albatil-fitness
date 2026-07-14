@@ -88,7 +88,7 @@ AF.WorkoutsPage = function({cur, mutate, toast, getWorkouts, openWorkout, showSc
       h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginTop:6,marginBottom:14,textAlign:'center'}},
         h('div',null, h('b',{style:{display:'block',fontSize:16}},burn.cardio), h('small',{style:{color:'var(--muted)'}},'🏃 كارديو')),
         h('div',null, h('b',{style:{display:'block',fontSize:16}},burn.iron), h('small',{style:{color:'var(--muted)'}},'🏋️ حديد')),
-        h('div',null, h('b',{style:{display:'block',fontSize:16}},burn.external), h('small',{style:{color:'var(--muted)'}},'🚶 خارج النادي'+(burn.externalIsEstimate?' (تقديري)':'')))
+        h('div',null, h('b',{style:{display:'block',fontSize:16}},burn.external), h('small',{style:{color:'var(--muted)'}},'🚶 خارج النادي'+(burn.externalIsEstimate?' (تقريبي)':'')))
       ),
       h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
         h('div',{style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:14,padding:12}},
