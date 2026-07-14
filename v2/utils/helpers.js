@@ -33,13 +33,19 @@ AF.dateKey = function(d){ return new Date(d).toISOString().slice(0,10); };
 // Day-of-week index with the week starting Saturday (0=Saturday ... 6=Friday).
 AF.satDow = function(d){ return (new Date(d).getDay()+1)%7; };
 
-// Total calories burned today from logged cardio/iron sessions (in-gym) + manual outside-gym entry.
+// Total calories burned today from logged cardio/iron sessions (in-gym) + outside-gym activity.
+// Outside-gym: uses the manual "burn" entry if the user typed one, otherwise auto-estimates from
+// logged steps (~0.045 kcal/step, scaled by body weight vs a 70kg reference).
 AF.dailyBurnBreakdown = function(c, dateKey){
   const logs = (c.gymBurnLogs||[]).filter(l=>l.date===dateKey);
   const cardio = logs.filter(l=>l.type==='cardio').reduce((a,l)=>a+l.calories,0);
   const iron = logs.filter(l=>l.type==='iron').reduce((a,l)=>a+l.calories,0);
-  const external = c.dailyLog?.[dateKey]?.burn || 0;
-  return {cardio, iron, external, total: cardio+iron+external};
+  const manualBurn = c.dailyLog?.[dateKey]?.burn || 0;
+  const steps = c.dailyLog?.[dateKey]?.steps || 0;
+  const weight = c.profile?.weight || 70;
+  const stepsEstimate = Math.round(steps*0.045*(weight/70));
+  const external = manualBurn>0 ? manualBurn : stepsEstimate;
+  return {cardio, iron, external, externalIsEstimate: manualBurn<=0 && stepsEstimate>0, total: cardio+iron+external};
 };
 
 AF.computeStreak = function(history){

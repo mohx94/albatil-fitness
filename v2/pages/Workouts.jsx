@@ -10,6 +10,14 @@ AF.WorkoutsPage = function({cur, mutate, toast, getWorkouts, openWorkout, showSc
   const todayKey = AF.dateKey(new Date());
   const burn = AF.dailyBurnBreakdown(c, todayKey);
   const todayGymLogs = (c.gymBurnLogs||[]).filter(l=>l.date===todayKey);
+  const [stepsInput, setStepsInput] = React.useState(()=>c.dailyLog?.[todayKey]?.steps||'');
+  const saveSteps = ()=>{
+    mutate((next,p)=>{
+      if(!p.dailyLog) p.dailyLog={};
+      p.dailyLog[todayKey] = {...(p.dailyLog[todayKey]||{}), steps:+stepsInput||0};
+    });
+    toast('👣 تم حفظ الخطوات');
+  };
 
   const [cardioForm, setCardioForm] = React.useState({minutes:'', calories:''});
   const [ironForm, setIronForm] = React.useState({minutes:'', calories:''});
@@ -66,12 +74,21 @@ AF.WorkoutsPage = function({cur, mutate, toast, getWorkouts, openWorkout, showSc
       })
     ),
 
+    h(AF.Panel,{style:{marginTop:14, display:'flex', alignItems:'center', gap:12}},
+      h('span',{style:{fontSize:24}},'👣'),
+      h('div',{style:{flex:1}},
+        h('span',{style:{display:'block',color:'var(--muted)',fontSize:11,marginBottom:4}},'خطوات اليوم'),
+        h('input',{type:'number', value:stepsInput, onChange:e=>setStepsInput(e.target.value), placeholder:'مثال: 8000', style:{width:'100%',padding:10,borderRadius:10,border:'1px solid var(--line)',background:'var(--surface2)',color:'var(--text)'}})
+      ),
+      h(AF.PrimaryBtn,{onClick:saveSteps, style:{padding:'10px 16px'}}, 'حفظ')
+    ),
+
     h(AF.Panel,{style:{marginTop:14}},
       h(AF.SectionTitle,{title:'🔥 السعرات المحروقة اليوم', right:`${burn.total} سعرة`}),
       h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginTop:6,marginBottom:14,textAlign:'center'}},
         h('div',null, h('b',{style:{display:'block',fontSize:16}},burn.cardio), h('small',{style:{color:'var(--muted)'}},'🏃 كارديو')),
         h('div',null, h('b',{style:{display:'block',fontSize:16}},burn.iron), h('small',{style:{color:'var(--muted)'}},'🏋️ حديد')),
-        h('div',null, h('b',{style:{display:'block',fontSize:16}},burn.external), h('small',{style:{color:'var(--muted)'}},'🚶 خارج النادي'))
+        h('div',null, h('b',{style:{display:'block',fontSize:16}},burn.external), h('small',{style:{color:'var(--muted)'}},'🚶 خارج النادي'+(burn.externalIsEstimate?' (تقديري)':'')))
       ),
       h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
         h('div',{style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:14,padding:12}},
