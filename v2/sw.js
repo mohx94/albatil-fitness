@@ -1,6 +1,6 @@
-const CACHE='albatil-fitness-v2-app-v2';
+const CACHE='albatil-fitness-v2-app-v4';
 const ASSETS=[
-  './','./index.html','./manifest.webmanifest','./icon.svg',
+  './','./index.html','./manifest.webmanifest','./icon.svg','./icon-180.png','./icon-192.png','./icon-512.png',
   './App.jsx',
   './foods-db.js',
   './utils/data.js','./utils/gamify.js','./utils/exerciseMatch.js','./utils/helpers.js',
