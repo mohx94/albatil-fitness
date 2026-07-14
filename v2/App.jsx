@@ -92,11 +92,11 @@ AF.App = function(){
   else if(screen==='session') pageEl = h(AF.SessionPage,{cur,mutate,getWorkouts,currentWorkoutId,showScreen,playBeep,notifEnabled,toast,freeWorkout});
   else if(screen==='freeSession') pageEl = h(AF.FreeSessionBuilder,{showScreen,startFreeSession});
   else if(screen==='progress') pageEl = h(AF.ProgressPage,{cur,mutate,getWorkouts,toast});
-  else if(screen==='coach') pageEl = h(AF.CoachPage,{cur,getWorkouts,showScreen});
+  else if(screen==='coach') pageEl = h(AF.CoachPage,{cur,mutate,getWorkouts,showScreen});
   else if(screen==='nutrition') pageEl = h(AF.NutritionPage,{cur,mutate,toast});
   else if(screen==='settings') pageEl = h(AF.SettingsPage,{state,cur,mutate,setState,toast,cloudUser,cloudReason,theme,setTheme:setThemeState,notifEnabled,setNotifEnabled});
 
-  const navScreen = ['session','library','editSchedule','coach','freeSession'].includes(screen) ? null : screen;
+  const navScreen = ['session','library','editSchedule','freeSession'].includes(screen) ? null : screen;
 
   return h('div',{style:{maxWidth:720,margin:'auto',minHeight:'100vh',padding:'18px 16px 96px'}},
     updateAvailable ? h('div',{style:{

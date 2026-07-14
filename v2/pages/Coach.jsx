@@ -1,9 +1,13 @@
 window.AF = window.AF || {};
 
-AF.CoachPage = function({cur, getWorkouts, showScreen}){
+AF.CoachPage = function({cur, mutate, getWorkouts, showScreen}){
   const c = cur();
   const [aiText, setAiText] = React.useState(null);
   const [aiLoading, setAiLoading] = React.useState(false);
+  const [chatMsgs, setChatMsgs] = React.useState([]);
+  const [chatInput, setChatInput] = React.useState('');
+  const [chatLoading, setChatLoading] = React.useState(false);
+  const chatEndRef = React.useRef(null);
 
   const now = Date.now();
   const weekAgo = now-7*86400000, twoWeeksAgo = now-14*86400000;
@@ -110,6 +114,52 @@ AF.CoachPage = function({cur, getWorkouts, showScreen}){
     setAiLoading(false);
   };
 
+  // Build a compact context blob the chat sends with every message so the assistant "knows" the user.
+  const buildUserContext = ()=>({
+    name: c.name, profile: c.profile, streak, todayWorkout: todayWorkout.name,
+    weeklyGoals: c.weeklyGoals, nutritionTargets: c.nutrition.targets,
+    todayNutrition: (()=>{ const dk=AF.dateKey(new Date()); return c.nutrition.logs.filter(l=>l.date===dk).reduce((a,l)=>({cal:a.cal+l.cal,protein:a.protein+l.protein}),{cal:0,protein:0}); })(),
+    injuries: c.injuries||[], prCount: Object.keys(c.prs).length,
+    recentHistory: c.history.slice(-6).map(hh=>({name:hh.name, date:hh.date, volume:Math.round(hh.volume)})),
+    muscleVolumeChangePercent: Object.fromEntries(muscleChanges.map(m=>[m.muscle, m.pct])),
+    currentProgramWeek: c.mesocycle?.week||1
+  });
+
+  const sendChat = async ()=>{
+    const text = chatInput.trim();
+    if(!text) return;
+    const nextMsgs = [...chatMsgs, {role:'user', content:text}];
+    setChatMsgs(nextMsgs);
+    setChatInput('');
+    if(!window.claude || !window.claude.complete){
+      setChatMsgs(m=>[...m, {role:'assistant', content:'ميزة المحادثة الحرة تحتاج اتصال بذكاء Claude غير متوفر بهذه البيئة حاليًا.'}]);
+      return;
+    }
+    setChatLoading(true);
+    const system = `أنت "المدرب الذكي" الشخصي داخل تطبيق Albatil Fitness. تتكلم باللهجة السعودية بشكل طبيعي وودود مثل مدرب حقيقي يعرف المستخدم. عندك بيانات المستخدم التالية (JSON) استخدمها لتخصيص ردودك:
+${JSON.stringify(buildUserContext())}
+قواعد:
+- جاوب أسئلة التدريب والتغذية والمعلومات الشائعة بالسوشل ميديا بوضوح وأكد أو انفي أو وضّح التفاصيل بناء على العلم.
+- لو سألك عن استراتيجية تدريب (مثل: البدء بوزن ثقيل أول جولة)، اشرح الإيجابيات والسلبيات بشكل متوازن بناءً على مبادئ علم التدريب المعروفة.
+- لو تقدر تقترح تعديل أهداف التغذية (سعرات/بروتين/كارب/دهون)، اسأل المستخدم أولاً ووضح السبب، وفقط لو وافق صراحة بآخر رسالة ضمّن ردك سطر بهذا الشكل بالضبط: UPDATE_TARGETS: {"calories":رقم,"protein":رقم,"carb":رقم,"fat":رقم}
+- لا تكتب ذلك السطر إلا لما يكون في نيتك فعلاً تعديل الأرقام بعد موافقة المستخدم.
+- خلك مختصر ومباشر، بدون مقدمات طويلة.`;
+    try{
+      const reply = await window.claude.complete({ system, messages: nextMsgs });
+      setChatMsgs(m=>[...m, {role:'assistant', content:reply}]);
+    }catch(e){
+      setChatMsgs(m=>[...m, {role:'assistant', content:'تعذر الرد الآن، جرّب مرة ثانية.'}]);
+    }
+    setChatLoading(false);
+  };
+
+  const applyTargetsUpdate = (vals)=>{
+    mutate((next,p)=>{ p.nutrition.targets = {calories:+vals.calories||p.nutrition.targets.calories, protein:+vals.protein||p.nutrition.targets.protein, carb:+vals.carb||p.nutrition.targets.carb, fat:+vals.fat||p.nutrition.targets.fat}; });
+    setChatMsgs(m=>[...m, {role:'assistant', content:'✅ تم تحديث أهداف التغذية.'}]);
+  };
+
+  React.useEffect(()=>{ chatEndRef.current?.scrollIntoView({block:'nearest'}); },[chatMsgs, chatLoading]);
+
   const h = React.createElement;
   return h(React.Fragment, null,
     h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}},
@@ -122,6 +172,50 @@ AF.CoachPage = function({cur, getWorkouts, showScreen}){
       h('div',{style:{display:'flex',gap:10,alignItems:'flex-start'}},
         h('span',{style:{fontSize:22}},'🤖'),
         h('p',{style:{margin:0,fontSize:14,lineHeight:1.8}}, greeting)
+      )
+    ),
+
+    h('div',{style:{
+      background:'linear-gradient(160deg, rgba(139,123,255,.1), rgba(139,123,255,.02))',
+      border:'1px solid rgba(139,123,255,.35)', borderRadius:22, padding:16, marginTop:14, marginBottom:14
+    }},
+      h('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:12}},
+        h('div',{style:{width:38,height:38,borderRadius:12,background:'linear-gradient(135deg,#8b7bff,#5b6ee8)',display:'grid',placeItems:'center',fontSize:18}}, '🤖'),
+        h('div',null,
+          h('b',{style:{display:'block',fontSize:14}}, 'سولف مع المدرب الذكي'),
+          h('small',{style:{color:'#8b7bff',fontWeight:700}}, '✨ محادثة حرة — يعرف بياناتك')
+        )
+      ),
+      h('div',{style:{maxHeight:340,overflowY:'auto',display:'grid',gap:10,marginBottom:12}},
+        !chatMsgs.length ? h('div',{style:{fontSize:12,color:'var(--muted)',textAlign:'center',padding:'10px 0'}}, 'اسأله عن أي شي: خطة، تغذية، أو معلومة سمعتها بالسوشيال ميديا 👇') : null,
+        chatMsgs.map((m,i)=>{
+          if(m.role==='user') return h('div',{key:i, style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:'14px 14px 4px 14px',padding:'10px 14px',fontSize:13,maxWidth:'85%',marginRight:'auto'}}, m.content);
+          const parts = m.content.split(/UPDATE_TARGETS:\s*(\{[^}]+\})/);
+          return h('div',{key:i, style:{background:'rgba(139,123,255,.1)',border:'1px solid rgba(139,123,255,.3)',borderRadius:'14px 14px 14px 4px',padding:'10px 14px',maxWidth:'92%'}},
+            h('div',{style:{fontSize:10,fontWeight:800,color:'#8b7bff',marginBottom:4}}, '🤖 AI'),
+            parts.map((part,pi)=>{
+              if(pi%2===1){
+                let vals=null; try{ vals = JSON.parse(part); }catch{}
+                if(!vals) return null;
+                return h('div',{key:pi, style:{marginTop:8,background:'var(--surface2)',border:'1px solid var(--gold)',borderRadius:12,padding:10}},
+                  h('small',{style:{color:'var(--muted)',display:'block',marginBottom:6}}, `اقتراح تعديل: ${vals.calories} سعرة · ${vals.protein} بروتين · ${vals.carb} كارب · ${vals.fat} دهون`),
+                  h('div',{style:{display:'flex',gap:8}},
+                    h(AF.PrimaryBtn,{onClick:()=>applyTargetsUpdate(vals), style:{flex:1,padding:'8px 12px',fontSize:12}}, '✅ قبول'),
+                    h(AF.GhostBtn,{onClick:()=>{}, style:{flex:1,padding:'8px 12px',fontSize:12}}, '✕ تجاهل')
+                  )
+                );
+              }
+              return part ? h('span',{key:pi, style:{fontSize:13,whiteSpace:'pre-wrap',lineHeight:1.8}}, part) : null;
+            })
+          );
+        }),
+        chatLoading ? h('div',{style:{fontSize:12,color:'var(--muted)'}}, '🤖 يكتب...') : null,
+        h('div',{ref:chatEndRef})
+      ),
+      h('div',{style:{display:'flex',gap:8}},
+        h('input',{value:chatInput, onChange:e=>setChatInput(e.target.value), onKeyDown:e=>{if(e.key==='Enter') sendChat();},
+          placeholder:'اكتب سؤالك هنا...', style:{flex:1,padding:'12px 14px',borderRadius:12,border:'1px solid var(--line)',background:'var(--surface2)',color:'var(--text)',fontSize:14}}),
+        h(AF.PrimaryBtn,{onClick:sendChat, disabled:chatLoading}, 'إرسال')
       )
     ),
 

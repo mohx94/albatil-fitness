@@ -22,7 +22,7 @@ AF.NutritionPage = function({cur, mutate, toast}){
   const filteredFoods = React.useMemo(()=>{
     const q = foodQuery.trim();
     if(!q) return allFoods().slice(0,30);
-    return allFoods().filter(f=>f.name.includes(q)).slice(0,30);
+    return allFoods().filter(f=>f.name.includes(q) || (f.aliases||[]).some(a=>a.includes(q))).slice(0,30);
   },[foodQuery, c.nutrition.customFoods]);
   const pickFood = (f)=>{ setFoodId(f.id); setFoodQuery(f.name); setFoodListOpen(false); };
   const k = AF.dateKey(nutriDate);

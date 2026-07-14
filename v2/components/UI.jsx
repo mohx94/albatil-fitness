@@ -67,6 +67,7 @@ AF.TopBar = function({profileName, onProfileClick}){
 AF.BottomNav = function({active, onNav}){
   const items = [
     {id:'home', icon:'⌂', label:'الرئيسية'},
+    {id:'coach', icon:'🤖', label:'المدرب الذكي'},
     {id:'workouts', icon:'🏋', label:'التمارين'},
     {id:'nutrition', icon:'🍗', label:'التغذية'},
     {id:'progress', icon:'↗', label:'التقدم'},
@@ -74,7 +75,7 @@ AF.BottomNav = function({active, onNav}){
   ];
   return h('nav',{style:{
     position:'fixed',bottom:10,left:'50%',transform:'translateX(-50%)',
-    width:'min(calc(100% - 20px),700px)',display:'grid',gridTemplateColumns:'repeat(5,1fr)',
+    width:'min(calc(100% - 20px),760px)',display:'grid',gridTemplateColumns:'repeat(6,1fr)',
     background:'rgba(14,18,26,.94)',backdropFilter:'blur(18px)',border:'1px solid var(--line)',
     borderRadius:20,padding:7,zIndex:20
   }},
