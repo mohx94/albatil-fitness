@@ -30,11 +30,10 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
   };
 
   const calcAutoTargets = ()=>{
-    const bf = c.measurements.length ? +c.measurements[c.measurements.length-1].fat || null : null;
-    const calc = AF.calcTargets({...c.profile, weight:+settingsForm.weight||c.profile.weight, goal:+settingsForm.goal||c.profile.goal, bodyFatPercent:bf||undefined});
+    const calc = AF.calcTargets({...c.profile, weight:+settingsForm.weight||c.profile.weight, goal:+settingsForm.goal||c.profile.goal});
     if(!calc){ toast('أدخل الطول والعمر أولًا'); return; }
     setTargets(calc);
-    toast(bf ? `تم الاحتساب بمعادلة Katch-McArdle (دهون ${bf}%) — راجع وحفظ` : 'تم احتساب الأهداف — راجعها واحفظ');
+    toast('تم احتساب الأهداف — راجعها واحفظ');
   };
   const saveTargets = (e)=>{
     e.preventDefault();

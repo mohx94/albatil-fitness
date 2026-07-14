@@ -45,23 +45,6 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
     return `📈 توقع وزنك بعد أسبوعين إذا استمريت بنفس الوتيرة: ${val} كجم ${dir}`;
   },[c.measurements]);
 
-  // Weekly rate of loss/gain as % of body weight — healthy range is ~0.5%-1.0%/week.
-  const weeklyRate = React.useMemo(()=>{
-    const ms = c.measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
-    const cutoff = Date.now()-7*86400000;
-    const before = ms.filter(m=>new Date(m.date).getTime()<=cutoff);
-    const after = ms.filter(m=>new Date(m.date).getTime()>cutoff);
-    if(!before.length || !after.length) return null;
-    const w0 = before[before.length-1].weight, w1 = after[after.length-1].weight;
-    if(!w0) return null;
-    const pct = ((w0-w1)/w0)*100;
-    let quality, color;
-    const abs = Math.abs(pct);
-    if(abs<0.2) quality='شبه ثابت'; else if(abs>=0.5 && abs<=1.0) quality='معدل صحي ✅'; else if(abs>1.0) quality='سريع جدًا ⚠️ خطر فقدان عضل'; else quality='بطيء نسبيًا';
-    color = (abs>=0.5&&abs<=1.0)?'var(--good)':(abs>1.0?'var(--danger)':'var(--gold)');
-    return {pct:+pct.toFixed(2), quality, color, dropping:pct>0};
-  },[c.measurements]);
-
   // ---- Strength tab ----
   const workouts = getWorkouts();
   const keysWithLogs = AF.allExerciseKeys(workouts).filter(k=>(c.exerciseLogs[k]||[]).length>0);
@@ -73,10 +56,10 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
   const trainedDays = {};
   c.history.forEach(hh=>{ const k=AF.dateKey(hh.date); (trainedDays[k]=trainedDays[k]||[]).push(hh.name); });
   const first = new Date(calYear, calMonth, 1);
-  const startDow = AF.satDow(first);
+  const startDow = first.getDay();
   const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
   const todayKey = AF.dateKey(new Date());
-  const dowNames = ['سبت','أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة'];
+  const dowNames = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
 
   // ---- Analytics tab ----
   const now = Date.now(), weekAgo = now-7*86400000, monthAgo = now-30*86400000;
@@ -119,10 +102,6 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
   const streak = AF.computeStreak(c.history);
   const bodyScore = AF.computeBodyScore(c);
   const archetype = AF.computeArchetype(c, streak);
-  const xpInfo = AF.computeXP(c);
-  const highlights = AF.computeHighlights(c, workouts);
-  const [muscleDetail, setMuscleDetail] = React.useState(null);
-  const [bodyView, setBodyView] = React.useState('front');
   const allAchievements = AF.ACHIEVEMENTS.concat(AF.EXTRA_ACHIEVEMENTS);
   const muscleDaysSince = (muscle)=>{
     const dates = c.history.filter(hh=>{
@@ -131,18 +110,6 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
     }).map(hh=>new Date(hh.date).getTime());
     if(!dates.length) return null;
     return Math.floor((Date.now()-Math.max(...dates))/86400000);
-  };
-  const muscleInfo = (muscle)=>{
-    const sessions = c.history.filter(hh=>{
-      const w = workouts.find(x=>x.id===hh.id);
-      return w && w.groups.some(([g])=>g===muscle);
-    });
-    const map = AF.keyMuscleMap(workouts);
-    const volume = Object.entries(c.exerciseLogs).reduce((sum,[k,logs])=>map[k]===muscle?sum+logs.reduce((a,l)=>a+l.volume,0):sum,0);
-    const last = sessions[sessions.length-1];
-    const ratings = sessions.filter(s=>s.rating?.stars).map(s=>s.rating.stars);
-    const avgRating = ratings.length ? +(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1) : null;
-    return {sessionsCount:sessions.length, volume:Math.round(volume), lastDate:last?.date, avgRating};
   };
 
   const askAI = async ()=>{
@@ -176,11 +143,7 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
 
     tab==='weightTab' ? h(React.Fragment,null,
       h(AF.Panel,null, h(AF.LineChart,{points:weightPoints, unit:' كجم', color:'var(--accent2)'}),
-        forecast ? h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}}, forecast) : null,
-        weeklyRate ? h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',border:'1px solid '+weeklyRate.color,borderRadius:12,padding:'10px 14px',marginTop:10}},
-          h('span',{style:{fontSize:12,color:'var(--muted)'}}, 'معدل التغيّر الأسبوعي (جودة التنشيف)'),
-          h('b',{style:{color:weeklyRate.color,fontSize:13}}, `${weeklyRate.dropping?'-':'+'}${Math.abs(weeklyRate.pct)}% · ${weeklyRate.quality}`)
-        ) : null
+        forecast ? h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}}, forecast) : null
       ),
       h('form',{onSubmit:submitMeasurement, style:{background:'linear-gradient(145deg, var(--surface), var(--panel-end))',border:'1px solid var(--line)',borderRadius:22,boxShadow:'var(--shadow)',padding:18,marginTop:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
         ['weight','fat','waist','neck','chest','arm','thigh','hip'].map(f=>{
@@ -319,70 +282,12 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
         )
       ),
       h(AF.Panel,null,
-        h(AF.SectionTitle,{title:'⭐ المستوى', right:`LEVEL ${xpInfo.level}`}),
-        h('div',{style:{height:12,borderRadius:99,background:'var(--surface2)',overflow:'hidden',marginTop:8}},
-          h('div',{style:{height:'100%',borderRadius:99,width:xpInfo.pct+'%',background:'linear-gradient(90deg, var(--gold), var(--accent))',transition:'width .4s ease'}})
-        ),
-        h('small',{style:{color:'var(--muted)',display:'block',marginTop:6}}, `${xpInfo.xpIntoLevel} / ${xpInfo.xpForNext} XP · إجمالي ${xpInfo.xp} XP`)
-      ),
-      (highlights.bestMuscle||highlights.bestMonth) ? h(AF.Panel,null,
-        h(AF.SectionTitle,{title:'📊 إحصائيات'}),
-        h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:6}},
-          highlights.bestMonth ? h('div',{style:{textAlign:'center'}}, h('b',{style:{display:'block',fontSize:15}},highlights.bestMonth), h('small',{style:{color:'var(--muted)'}},'أفضل شهر')) : null,
-          highlights.bestMuscle ? h('div',{style:{textAlign:'center'}}, h('b',{style:{display:'block',fontSize:15}},highlights.bestMuscle), h('small',{style:{color:'var(--muted)'}},'أكثر عضلة تدرّبت')) : null,
-          highlights.bestDow ? h('div',{style:{textAlign:'center'}}, h('b',{style:{display:'block',fontSize:15}},highlights.bestDow), h('small',{style:{color:'var(--muted)'}},'أكثر يوم تتمرن فيه')) : null,
-          highlights.avgDuration ? h('div',{style:{textAlign:'center'}}, h('b',{style:{display:'block',fontSize:15}},highlights.avgDuration+' د'), h('small',{style:{color:'var(--muted)'}},'متوسط مدة التمرين')) : null
-        )
-      ) : null,
-      h(AF.Panel,null,
-        h(AF.SectionTitle,{title:'🧍 خريطة توازن الجسم', right:'اضغط على العضلة'}),
-        h('div',{style:{display:'flex',justifyContent:'center',gap:8,margin:'6px 0 14px'}},
-          [['front','أمامي'],['back','خلفي']].map(([v,label])=>h('button',{key:v, onClick:()=>setBodyView(v), style:{
-            fontSize:12,fontWeight:700,border:'1px solid '+(bodyView===v?'var(--accent)':'var(--line)'),
-            background:bodyView===v?'rgba(var(--accent-rgb),.12)':'var(--surface2)',color:'var(--text)',
-            borderRadius:99,padding:'6px 18px',cursor:'pointer'
-          }}, label))
-        ),
-        (()=>{
-          const positions = bodyView==='front' ? {
-            'الكتف':[[22,17],[78,17]], 'الصدر':[[50,24]], 'الباي':[[16,34],[84,34]],
-            'السواعد':[[10,50],[90,50]], 'الذراع':[[16,34],[84,34]], 'الأرجل':[[38,78],[62,78]]
-          } : {
-            'الكتف الخلفي':[[22,17],[78,17]], 'الظهر':[[50,26]], 'التراي':[[16,34],[84,34]],
-            'السواعد':[[10,50],[90,50]], 'الأرداف':[[50,52]], 'الأرجل':[[38,78],[62,78]]
-          };
-          const dots = [];
-          Object.entries(positions).forEach(([muscle,pts])=>{
-            if(!allMuscleGroups.includes(muscle)) return;
-            const days = muscleDaysSince(muscle);
-            const color = days==null?'var(--line)':(days<=2?'var(--good)':(days<=7?'var(--gold)':'var(--danger)'));
-            pts.forEach((pt,i)=>dots.push({muscle,x:pt[0],y:pt[1],color,key:muscle+i}));
-          });
-          return h('div',{style:{position:'relative',width:220,height:320,margin:'0 auto'}},
-            h('svg',{viewBox:'0 0 100 145', style:{position:'absolute',inset:0,width:'100%',height:'100%'}},
-              h('ellipse',{cx:50,cy:12,rx:11,ry:12,fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
-              h('path',{d:'M32 26 Q50 20 68 26 L74 70 Q50 78 26 70 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
-              h('path',{d:'M30 28 L14 65 L21 68 L36 32 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
-              h('path',{d:'M70 28 L86 65 L79 68 L64 32 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
-              h('path',{d:'M30 70 Q38 110 34 140 L44 140 Q48 108 50 76 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
-              h('path',{d:'M70 70 Q62 110 66 140 L56 140 Q52 108 50 76 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1})
-            ),
-            dots.map(d=>h('button',{key:d.key, onClick:()=>setMuscleDetail(d.muscle), title:d.muscle, style:{
-              position:'absolute', left:d.x+'%', top:(d.y/145*100)+'%', transform:'translate(-50%,-50%)',
-              width:26,height:26,borderRadius:'50%',border:`2px solid ${d.color}`,background:d.color==='var(--line)'?'var(--surface)':'color-mix(in srgb, '+d.color+' 30%, var(--surface))',
-              cursor:'pointer',boxShadow:d.color!=='var(--line)'?`0 0 10px ${d.color}`:'none'
-            }}))
-          );
-        })(),
-        h('div',{style:{textAlign:'center',marginTop:10,fontSize:11,color:'var(--muted)'}}, '🟢 مدرّب مؤخرًا · 🟡 متوسط · 🔴 مهمل')
-      ),
-      h(AF.Panel,null,
-        h(AF.SectionTitle,{title:'📊 قائمة العضلات', right:'اضغط لتفاصيل العضلة'}),
+        h(AF.SectionTitle,{title:'🗺️ خريطة العضلات الحرارية', right:'حسب آخر تمرين'}),
         h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8,marginTop:6}},
-          allMuscleGroups.map(g=>{
+          allMuscles.map(g=>{
             const days = muscleDaysSince(g);
             const color = days==null?'var(--line)':(days<=2?'var(--good)':(days<=7?'var(--gold)':'var(--danger)'));
-            return h('button',{key:g, onClick:()=>setMuscleDetail(g), style:{background:'var(--surface2)',border:`2px solid ${color}`,borderRadius:14,padding:'12px 10px',textAlign:'center',cursor:'pointer',color:'var(--text)'}},
+            return h('div',{key:g, style:{background:'var(--surface2)',border:`2px solid ${color}`,borderRadius:14,padding:'12px 10px',textAlign:'center'}},
               h('b',{style:{display:'block',fontSize:13}}, g),
               h('small',{style:{color:'var(--muted)',fontSize:11}}, days==null?'لم يُدرّب بعد':(days===0?'اليوم':`قبل ${days} يوم`))
             );
@@ -414,19 +319,6 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
           })
         )
       )
-    ) : null,
-
-    muscleDetail ? (()=>{ const info = muscleInfo(muscleDetail); return h('div',{key:'muscle-modal', style:{position:'fixed',inset:0,background:'rgba(0,0,0,.6)',zIndex:60,display:'grid',placeItems:'center',padding:16}, onClick:()=>setMuscleDetail(null)},
-      h('div',{onClick:e=>e.stopPropagation(), style:{background:'var(--surface)',border:'1px solid var(--line)',borderRadius:20,padding:20,maxWidth:340,width:'100%'}},
-        h('h3',{style:{margin:'0 0 12px'}}, muscleDetail),
-        h('div',{style:{display:'grid',gap:8,fontSize:14}},
-          h('div',{style:{display:'flex',justifyContent:'space-between'}}, h('span',{style:{color:'var(--muted)'}},'عدد الحصص'), h('b',null, info.sessionsCount)),
-          h('div',{style:{display:'flex',justifyContent:'space-between'}}, h('span',{style:{color:'var(--muted)'}},'آخر تمرين'), h('b',null, info.lastDate?new Date(info.lastDate).toLocaleDateString('ar-SA'):'—')),
-          h('div',{style:{display:'flex',justifyContent:'space-between'}}, h('span',{style:{color:'var(--muted)'}},'الحجم الكلي'), h('b',null, info.volume+' كجم')),
-          h('div',{style:{display:'flex',justifyContent:'space-between'}}, h('span',{style:{color:'var(--muted)'}},'التقييم'), h('b',null, info.avgRating?'⭐'.repeat(Math.round(info.avgRating)):'—'))
-        ),
-        h(AF.PrimaryBtn,{onClick:()=>setMuscleDetail(null), style:{width:'100%',marginTop:16}}, 'إغلاق')
-      )
-    );})() : null
+    ) : null
   );
 };

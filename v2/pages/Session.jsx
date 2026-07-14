@@ -38,19 +38,6 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
   const [gymMode, setGymMode] = React.useState(false);
   const [focusCountdown, setFocusCountdown] = React.useState(null);
   const wakeLockRef = React.useRef(null);
-  const [extraGroups, setExtraGroups] = React.useState([]); // exercises added mid-session: {muscle,name,sets,reps}
-  const [showAddBox, setShowAddBox] = React.useState(false);
-  const [addQuery, setAddQuery] = React.useState('');
-  const addResult = React.useMemo(()=>addQuery.trim() ? AF.matchExercise(addQuery) : {match:null,candidates:[],confidence:0}, [addQuery]);
-
-  const addExerciseNow = (entry)=>{
-    const key = workout.id+'__'+entry.name;
-    if(exercises[key]){ toast('هذا التمرين موجود بالفعل بالحصة'); setShowAddBox(false); setAddQuery(''); return; }
-    setExercises(prev=>({...prev, [key]:{sets:[{weight:'',reps:'',rir:'',done:false},{weight:'',reps:'',rir:'',done:false},{weight:'',reps:'',rir:'',done:false}], notes:''}}));
-    setExtraGroups(prev=>[...prev, {muscle:entry.muscle, name:entry.name, sets:3, reps:'8-12'}]);
-    setShowAddBox(false); setAddQuery('');
-    toast('✅ تمت إضافة '+entry.name);
-  };
 
   const toggleGymMode = async ()=>{
     if(!gymMode){
@@ -191,30 +178,6 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
     const durationMin = Math.max(1, Math.round((Date.now()-sessionStartRef.current)/60000));
     const restTotalMin = Math.round(restStatsRef.current.total/60);
     const restMaxSec = restStatsRef.current.max;
-
-    // Build a quick post-workout report before saving.
-    const prevSessions = c.history.filter(hh=>hh.id===workout.id);
-    const prevAvgVolume = prevSessions.length ? prevSessions.reduce((a,x)=>a+x.volume,0)/prevSessions.length : null;
-    const volumeChangePct = prevAvgVolume ? Math.round((volume-prevAvgVolume)/prevAvgVolume*100) : null;
-    const allGroupsForReport = [...workout.groups, ...(extraGroups.length ? [['➕ إضافات الحصة', extraGroups.map(e=>[e.name])]] : [])];
-    const muscleVol = {};
-    allGroupsForReport.forEach(([g,list])=>list.forEach(([name])=>{
-      const key = workout.id+'__'+name;
-      const v = exerciseLogUpdates[key]?.volume||0;
-      if(v) muscleVol[g] = (muscleVol[g]||0)+v;
-    }));
-    const muscleEntries = Object.entries(muscleVol).sort((a,b)=>b[1]-a[1]);
-    const bestMuscle = muscleEntries[0]?.[0]||null;
-    const worstMuscle = muscleEntries[muscleEntries.length-1]?.[0]||null;
-    const completionRatio = liveTotal ? liveDone/liveTotal : 0;
-    let rirSum=0, rirCount=0;
-    Object.values(exerciseLogUpdates).forEach(v=>{ if(v.avgRir!=null){ rirSum+=v.avgRir; rirCount++; } });
-    const avgRir = rirCount ? rirSum/rirCount : null;
-    const prsThisSession = Object.keys(prUpdates).length;
-    let score = completionRatio*6 + (volumeChangePct!=null ? Math.max(0,Math.min(2,(volumeChangePct/10))) : 1) + Math.min(2,prsThisSession);
-    score = Math.max(0, Math.min(10, +score.toFixed(1)));
-    const report = {volume:Math.round(volume), volumeChangePct, bestMuscle, worstMuscle, score, prsThisSession, durationMin};
-
     mutate((next,p)=>{
       p.history.push({date:now, id:workout.id, name:workout.name, sets, volume, notes, durationMin, restTotalMin, restMaxSec, restCount:restStatsRef.current.count});
       Object.entries(prUpdates).forEach(([k,v])=>{ p.prs[k]=v; });
@@ -225,7 +188,7 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
       p.draft = null;
     });
     toast('تم حفظ التمرين 💪');
-    setRatingPrompt({date:now, report});
+    setRatingPrompt({date:now});
   };
 
   const submitRating = ()=>{
@@ -260,26 +223,6 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
       h(AF.SecondaryBtn,{onClick:startFocusMode, style:{flex:1}}, '🎯 وضع التركيز')
     ),
 
-    h(AF.SecondaryBtn,{onClick:()=>setShowAddBox(v=>!v), style:{width:'100%',marginBottom:showAddBox?10:14}}, showAddBox?'✕ إغلاق':'➕ أضف تمرين لهذه الحصة'),
-    showAddBox ? h(AF.Panel,{style:{marginBottom:14}},
-      h('input',{
-        value:addQuery, onChange:e=>setAddQuery(e.target.value), autoFocus:true,
-        placeholder:'مثال: تمرين إضافي، بار دنج، سكوات...',
-        style:{width:'100%',padding:'12px 14px',borderRadius:12,border:'1px solid var(--line)',background:'var(--surface2)',color:'var(--text)',fontSize:14}
-      }),
-      addQuery.trim() ? h('div',{style:{marginTop:10}},
-        addResult.match ? h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,background:'var(--surface2)',border:'1px solid var(--accent)',borderRadius:12,padding:'10px 12px'}},
-          h('div',null, h('b',null, addResult.match.name), h('br'), h('small',{style:{color:'var(--muted)'}}, addResult.match.muscle+' · '+addResult.match.equipment)),
-          h(AF.PrimaryBtn,{onClick:()=>addExerciseNow(addResult.match)}, 'إضافة')
-        ) : h('div',null,
-          addResult.candidates.length ? h('div',{style:{display:'flex',flexWrap:'wrap',gap:8,marginBottom:8}},
-            addResult.candidates.map(cd=>h('button',{key:cd.name, onClick:()=>addExerciseNow(cd), style:{fontSize:12,border:'1px solid var(--line)',background:'var(--surface)',color:'var(--text)',borderRadius:99,padding:'6px 12px',cursor:'pointer'}}, `${cd.name} (${cd.muscle})`))
-          ) : null,
-          h(AF.SecondaryBtn,{onClick:()=>addExerciseNow({name:addQuery.trim(), muscle:'➕ إضافات الحصة'})}, `➕ أضفه كما هو باسم "${addQuery.trim()}"`)
-        )
-      ) : null
-    ) : null,
-
     h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}},
       h('div',{style:{background:'var(--surface)',border:'1px solid var(--line)',borderRadius:16,padding:'12px 14px'}}, h('span',{style:{display:'block',color:'var(--muted)',fontSize:11}},'الحجم الحالي'), h('b',{style:{fontSize:20}}, Math.round(liveVolume))),
       h('div',{style:{background:'var(--surface)',border:'1px solid var(--line)',borderRadius:16,padding:'12px 14px'}}, h('span',{style:{display:'block',color:'var(--muted)',fontSize:11}},'الجولات المنجزة'), h('b',{style:{fontSize:20}}, `${liveDone} / ${liveTotal}`))
@@ -305,7 +248,7 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
       )
     ),
 
-    [...workout.groups, ...(extraGroups.length ? [['➕ إضافات الحصة', extraGroups.map(e=>[e.name,e.sets,e.reps])]] : [])].map(([g,list])=>h(React.Fragment,{key:g},
+    workout.groups.map(([g,list])=>h(React.Fragment,{key:g},
       h('div',{style:{display:'flex',alignItems:'center',gap:8,margin:'18px 2px 8px'}},
         h('h3',{style:{margin:0}}, g),
         injuredParts.has(g) ? h('span',{style:{fontSize:11,color:'var(--danger)',background:'rgba(255,97,120,.1)',border:'1px solid rgba(255,97,120,.25)',borderRadius:99,padding:'3px 9px'}}, '⚠️ إصابة مسجلة بهذه العضلة') : null
