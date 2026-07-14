@@ -115,15 +115,30 @@ AF.CoachPage = function({cur, mutate, getWorkouts, showScreen}){
   };
 
   // Build a compact context blob the chat sends with every message so the assistant "knows" the user.
-  const buildUserContext = ()=>({
-    name: c.name, profile: c.profile, streak, todayWorkout: todayWorkout.name,
-    weeklyGoals: c.weeklyGoals, nutritionTargets: c.nutrition.targets,
-    todayNutrition: (()=>{ const dk=AF.dateKey(new Date()); return c.nutrition.logs.filter(l=>l.date===dk).reduce((a,l)=>({cal:a.cal+l.cal,protein:a.protein+l.protein}),{cal:0,protein:0}); })(),
-    injuries: c.injuries||[], prCount: Object.keys(c.prs).length,
-    recentHistory: c.history.slice(-6).map(hh=>({name:hh.name, date:hh.date, volume:Math.round(hh.volume)})),
-    muscleVolumeChangePercent: Object.fromEntries(muscleChanges.map(m=>[m.muscle, m.pct])),
-    currentProgramWeek: c.mesocycle?.week||1
-  });
+  const buildUserContext = ()=>{
+    const last7Dates = Array.from({length:7}).map((_,i)=>{ const d=new Date(); d.setDate(d.getDate()-i); return AF.dateKey(d); });
+    const sleepLast7 = last7Dates.map(dk=>({date:dk, sleep:c.dailyLog?.[dk]?.sleep ?? null})).filter(x=>x.sleep!=null);
+    // Flag exercises where the most recent working weight jumped >20% vs the one before it.
+    const recentWeightJumps = Object.entries(c.exerciseLogs).map(([key,logs])=>{
+      if(logs.length<2) return null;
+      const a = logs[logs.length-2], b = logs[logs.length-1];
+      if(!a.weight) return null;
+      const jumpPct = Math.round((b.weight-a.weight)/a.weight*100);
+      return jumpPct>=20 ? {exercise:AF.exerciseLabel(key), from:a.weight, to:b.weight, jumpPct} : null;
+    }).filter(Boolean);
+    return {
+      name: c.name, profile: c.profile, streak, todayWorkout: todayWorkout.name,
+      weeklyGoals: c.weeklyGoals, nutritionTargets: c.nutrition.targets,
+      todayNutrition: (()=>{ const dk=AF.dateKey(new Date()); return c.nutrition.logs.filter(l=>l.date===dk).reduce((a,l)=>({cal:a.cal+l.cal,protein:a.protein+l.protein}),{cal:0,protein:0}); })(),
+      injuries: c.injuries||[], prCount: Object.keys(c.prs).length,
+      recentHistory: c.history.slice(-6).map(hh=>({name:hh.name, date:hh.date, volume:Math.round(hh.volume), rating:hh.rating?.stars||null})),
+      muscleVolumeChangePercent: Object.fromEntries(muscleChanges.map(m=>[m.muscle, m.pct])),
+      currentProgramWeek: c.mesocycle?.week||1,
+      sleepLast7Days: sleepLast7,
+      recentWeightJumps,
+      workoutsSchedule: workouts.map(w=>({id:w.id, name:w.name, exercises:w.groups.flatMap(([g,exs])=>exs.map(([n,sets,reps])=>({muscle:g,name:n,sets,reps})))}))
+    };
+  };
 
   const sendChat = async ()=>{
     const text = chatInput.trim();
@@ -140,9 +155,10 @@ AF.CoachPage = function({cur, mutate, getWorkouts, showScreen}){
 ${JSON.stringify(buildUserContext())}
 قواعد:
 - جاوب أسئلة التدريب والتغذية والمعلومات الشائعة بالسوشل ميديا بوضوح وأكد أو انفي أو وضّح التفاصيل بناء على العلم.
-- لو سألك عن استراتيجية تدريب (مثل: البدء بوزن ثقيل أول جولة)، اشرح الإيجابيات والسلبيات بشكل متوازن بناءً على مبادئ علم التدريب المعروفة.
+- لو قال المستخدم إنه يحس بإجهاد أو ضعف بعضلة معينة، اربط ردك ببياناته الفعلية (مثل sleepLast7Days أو recentWeightJumps أو muscleVolumeChangePercent) قبل ما تفسّر — مثال: "طبيعي تحس بإجهاد، نومك آخر يومين كان أقل من 6 ساعات" أو "لاحظت قفزت بوزن كذا 20% مرة وحدة، هذا سبب محتمل".
 - لو تقدر تقترح تعديل أهداف التغذية (سعرات/بروتين/كارب/دهون)، اسأل المستخدم أولاً ووضح السبب، وفقط لو وافق صراحة بآخر رسالة ضمّن ردك سطر بهذا الشكل بالضبط: UPDATE_TARGETS: {"calories":رقم,"protein":رقم,"carb":رقم,"fat":رقم}
-- لا تكتب ذلك السطر إلا لما يكون في نيتك فعلاً تعديل الأرقام بعد موافقة المستخدم.
+- لو قال المستخدم عضلة معينة ضعيفة أو ناقصة بجدوله، اقترح تمرين إضافي مناسب لها من نفس يوم تدريبها (استخدم workoutsSchedule لتعرف الأيام والعضلات)، اشرح ليش، واسأله يوافق. فقط لو وافق صراحة بآخر رسالة ضمّن ردك سطر بهذا الشكل بالضبط: ADD_EXERCISE: {"workoutId":"معرف اليوم من workoutsSchedule","muscle":"اسم العضلة بالعربي","name":"اسم التمرين بالإنجليزي أو العربي","sets":3,"reps":"10-12"}
+- لا تكتب أي سطر UPDATE_TARGETS أو ADD_EXERCISE إلا لما يكون في نيتك فعلاً تنفيذ تعديل بعد موافقة صريحة من المستخدم بنفس المحادثة.
 - خلك مختصر ومباشر، بدون مقدمات طويلة.`;
     try{
       const res = await AF.callAI({ system, messages: nextMsgs });
@@ -156,6 +172,18 @@ ${JSON.stringify(buildUserContext())}
   const applyTargetsUpdate = (vals)=>{
     mutate((next,p)=>{ p.nutrition.targets = {calories:+vals.calories||p.nutrition.targets.calories, protein:+vals.protein||p.nutrition.targets.protein, carb:+vals.carb||p.nutrition.targets.carb, fat:+vals.fat||p.nutrition.targets.fat}; });
     setChatMsgs(m=>[...m, {role:'assistant', content:'✅ تم تحديث أهداف التغذية.'}]);
+  };
+
+  const applyAddExercise = (vals)=>{
+    mutate((next,p)=>{
+      const base = p.customWorkouts ? p.customWorkouts : JSON.parse(JSON.stringify(AF.WORKOUTS));
+      const w = base.find(x=>x.id===vals.workoutId) || base[0];
+      let group = w.groups.find(([g])=>g===vals.muscle);
+      if(!group){ group = [vals.muscle, []]; w.groups.push(group); }
+      group[1].push([vals.name, +vals.sets||3, vals.reps||'10-12']);
+      p.customWorkouts = base;
+    });
+    setChatMsgs(m=>[...m, {role:'assistant', content:`✅ تمت إضافة ${vals.name} ليوم ${vals.workoutId}.`}]);
   };
 
   React.useEffect(()=>{ chatEndRef.current?.scrollIntoView({block:'nearest'}); },[chatMsgs, chatLoading]);
@@ -190,13 +218,24 @@ ${JSON.stringify(buildUserContext())}
         !chatMsgs.length ? h('div',{style:{fontSize:12,color:'var(--muted)',textAlign:'center',padding:'10px 0'}}, 'اسأله عن أي شي: خطة، تغذية، أو معلومة سمعتها بالسوشيال ميديا 👇') : null,
         chatMsgs.map((m,i)=>{
           if(m.role==='user') return h('div',{key:i, style:{background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:'14px 14px 4px 14px',padding:'10px 14px',fontSize:13,maxWidth:'85%',marginRight:'auto'}}, m.content);
-          const parts = m.content.split(/UPDATE_TARGETS:\s*(\{[^}]+\})/);
+          const parts = m.content.split(/(?:UPDATE_TARGETS|ADD_EXERCISE):\s*(\{[^}]+\})/);
+          const markerMatches = [...m.content.matchAll(/(UPDATE_TARGETS|ADD_EXERCISE):\s*\{[^}]+\}/g)].map(mm=>mm[1]);
+          let markerIdx = -1;
           return h('div',{key:i, style:{background:'rgba(139,123,255,.1)',border:'1px solid rgba(139,123,255,.3)',borderRadius:'14px 14px 14px 4px',padding:'10px 14px',maxWidth:'92%'}},
             h('div',{style:{fontSize:10,fontWeight:800,color:'#8b7bff',marginBottom:4}}, '🤖 AI'),
             parts.map((part,pi)=>{
               if(pi%2===1){
+                markerIdx++;
+                const kind = markerMatches[markerIdx];
                 let vals=null; try{ vals = JSON.parse(part); }catch{}
                 if(!vals) return null;
+                if(kind==='ADD_EXERCISE') return h('div',{key:pi, style:{marginTop:8,background:'var(--surface2)',border:'1px solid var(--gold)',borderRadius:12,padding:10}},
+                  h('small',{style:{color:'var(--muted)',display:'block',marginBottom:6}}, `اقتراح إضافة تمرين: ${vals.name} — ${vals.sets}×${vals.reps} (${vals.muscle})`),
+                  h('div',{style:{display:'flex',gap:8}},
+                    h(AF.PrimaryBtn,{onClick:()=>applyAddExercise(vals), style:{flex:1,padding:'8px 12px',fontSize:12}}, '✅ قبول'),
+                    h(AF.GhostBtn,{onClick:()=>{}, style:{flex:1,padding:'8px 12px',fontSize:12}}, '✕ تجاهل')
+                  )
+                );
                 return h('div',{key:pi, style:{marginTop:8,background:'var(--surface2)',border:'1px solid var(--gold)',borderRadius:12,padding:10}},
                   h('small',{style:{color:'var(--muted)',display:'block',marginBottom:6}}, `اقتراح تعديل: ${vals.calories} سعرة · ${vals.protein} بروتين · ${vals.carb} كارب · ${vals.fat} دهون`),
                   h('div',{style:{display:'flex',gap:8}},
