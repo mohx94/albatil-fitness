@@ -40,8 +40,18 @@ AF.App = function(){
     return c.customWorkouts || AF.WORKOUTS;
   },[state]);
 
-  const openWorkout = (id)=>{ setCurrentWorkoutId(id); setScreen('session'); };
+  const [freeWorkout, setFreeWorkout] = React.useState(null);
+  const openWorkout = (id)=>{ setCurrentWorkoutId(id); setScreen('session'); if(id!=='freeplay') setFreeWorkout(null); };
   const showScreen = (s)=>{ setScreen(s); window.scrollTo({top:0,behavior:'smooth'}); };
+
+  const startFreeSession = (list)=>{
+    const groups = {};
+    list.forEach(it=>{ if(!groups[it.muscle]) groups[it.muscle]=[]; groups[it.muscle].push([it.name,it.sets,it.reps]); });
+    const workout = {id:'freeplay', name:'تمرين حر', subtitle:'مبني بواسطتك', groups:Object.entries(groups)};
+    setFreeWorkout(workout);
+    setCurrentWorkoutId('freeplay');
+    setScreen('session');
+  };
 
   const advanceProgramWeek = ()=>{
     mutate((next,p)=>{
@@ -62,18 +72,31 @@ AF.App = function(){
 
   const c = cur();
 
+  const SECTION_ACCENTS = {
+    workouts:{'--accent':'#c9a227','--accent2':'#a9862a','--accent-rgb':'201,162,39'},
+    library:{'--accent':'#c9a227','--accent2':'#a9862a','--accent-rgb':'201,162,39'},
+    editSchedule:{'--accent':'#c9a227','--accent2':'#a9862a','--accent-rgb':'201,162,39'},
+    freeSession:{'--accent':'#c9a227','--accent2':'#a9862a','--accent-rgb':'201,162,39'},
+    session:{'--accent':'#c9a227','--accent2':'#a9862a','--accent-rgb':'201,162,39'},
+    nutrition:{'--accent':'#2fa374','--accent2':'#22815b','--accent-rgb':'47,163,116'},
+    progress:{'--accent':'#5b6ee8','--accent2':'#4453b8','--accent-rgb':'91,110,232'},
+    coach:{'--accent':'#5b6ee8','--accent2':'#4453b8','--accent-rgb':'91,110,232'}
+  };
+  const sectionStyle = SECTION_ACCENTS[screen] || {};
+
   let pageEl = null;
   if(screen==='home') pageEl = h(AF.HomePage,{state,cur,mutate,getWorkouts,openWorkout,showScreen});
   else if(screen==='workouts') pageEl = h(AF.WorkoutsPage,{cur,getWorkouts,openWorkout,showScreen,advanceProgramWeek});
   else if(screen==='library') pageEl = h(AF.LibraryPage,{cur,mutate,getWorkouts,showScreen});
   else if(screen==='editSchedule') pageEl = h(AF.ScheduleEditorPage,{cur,mutate,getWorkouts,showScreen});
-  else if(screen==='session') pageEl = h(AF.SessionPage,{cur,mutate,getWorkouts,currentWorkoutId,showScreen,playBeep,notifEnabled,toast});
+  else if(screen==='session') pageEl = h(AF.SessionPage,{cur,mutate,getWorkouts,currentWorkoutId,showScreen,playBeep,notifEnabled,toast,freeWorkout});
+  else if(screen==='freeSession') pageEl = h(AF.FreeSessionBuilder,{showScreen,startFreeSession});
   else if(screen==='progress') pageEl = h(AF.ProgressPage,{cur,mutate,getWorkouts,toast});
   else if(screen==='coach') pageEl = h(AF.CoachPage,{cur,getWorkouts,showScreen});
   else if(screen==='nutrition') pageEl = h(AF.NutritionPage,{cur,mutate,toast});
   else if(screen==='settings') pageEl = h(AF.SettingsPage,{state,cur,mutate,setState,toast,cloudUser,cloudReason,theme,setTheme:setThemeState,notifEnabled,setNotifEnabled});
 
-  const navScreen = ['session','library','editSchedule','coach'].includes(screen) ? null : screen;
+  const navScreen = ['session','library','editSchedule','coach','freeSession'].includes(screen) ? null : screen;
 
   return h('div',{style:{maxWidth:720,margin:'auto',minHeight:'100vh',padding:'18px 16px 96px'}},
     updateAvailable ? h('div',{style:{
@@ -84,7 +107,7 @@ AF.App = function(){
       h('button',{onClick:()=>window.__swReloadForUpdate(), style:{border:0,background:'var(--bg)',color:'var(--accent)',borderRadius:99,padding:'6px 14px',fontWeight:800,cursor:'pointer'}}, 'تحديث الآن')
     ) : null,
     h(AF.TopBar,{profileName:c.name||'الملف', onProfileClick:()=>showScreen('settings')}),
-    h('main',null, pageEl),
+    h('main',{style:sectionStyle}, pageEl),
     navScreen ? h(AF.BottomNav,{active:navScreen, onNav:showScreen}) : null,
     h(AF.Toast,{msg:toastMsg})
   );

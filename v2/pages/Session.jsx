@@ -17,9 +17,9 @@ function buildInitialExercises(workout, draft){
   return exs;
 }
 
-AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScreen, playBeep, notifEnabled, toast}){
+AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScreen, playBeep, notifEnabled, toast, freeWorkout}){
   const c = cur();
-  const workout = getWorkouts().find(w=>w.id===currentWorkoutId);
+  const workout = (freeWorkout && freeWorkout.id===currentWorkoutId) ? freeWorkout : getWorkouts().find(w=>w.id===currentWorkoutId);
   const draft = (c.draft && c.draft.id===currentWorkoutId) ? c.draft : null;
   const deload = (c.mesocycle?.week||1)===4;
   const [exercises, setExercises] = React.useState(()=>buildInitialExercises(workout, draft));

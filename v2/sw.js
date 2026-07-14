@@ -2,12 +2,12 @@ const CACHE='albatil-fitness-v2-app-v2';
 const ASSETS=[
   './','./index.html','./manifest.webmanifest','./icon.svg',
   './App.jsx',
-  './utils/data.js','./utils/gamify.js','./utils/helpers.js',
+  './utils/data.js','./utils/gamify.js','./utils/exerciseMatch.js','./utils/helpers.js',
   './services/storage.js','./services/firebase.js','./services/ai.js',
   './hooks/useAppState.js',
   './components/Charts.jsx','./components/UI.jsx',
   './pages/Home.jsx','./pages/Workouts.jsx','./pages/Library.jsx','./pages/ScheduleEditor.jsx',
-  './pages/Session.jsx','./pages/Progress.jsx','./pages/Nutrition.jsx','./pages/Settings.jsx','./pages/Coach.jsx'
+  './pages/Session.jsx','./pages/FreeSession.jsx','./pages/Progress.jsx','./pages/Nutrition.jsx','./pages/Settings.jsx','./pages/Coach.jsx'
 ];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));

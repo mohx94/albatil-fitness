@@ -21,6 +21,7 @@ AF.WorkoutsPage = function({cur, getWorkouts, openWorkout, showScreen, advancePr
     ),
     h('div',{style:{display:'flex',gap:8,marginBottom:14,marginTop:14}},
       h(AF.SecondaryBtn,{onClick:()=>showScreen('library'), style:{flex:1}}, '📚 مكتبة التمارين'),
+      h(AF.SecondaryBtn,{onClick:()=>showScreen('freeSession'), style:{flex:1}}, '🆕 ابدأ من الصفر'),
       h(AF.SecondaryBtn,{onClick:()=>showScreen('editSchedule'), style:{flex:1}}, '✏️ تخصيص الجدول')
     ),
     h(AF.Panel,{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}},
