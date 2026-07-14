@@ -139,3 +139,43 @@ AF.getWeeklyChallenge = function(c, workouts){
   const progress = challenge.metric(c, weekAgo, workouts);
   return {...challenge, progress: Math.round(progress)};
 };
+
+// XP / Level system: total volume + PRs + streak days feed a simple level curve.
+AF.computeXP = function(c){
+  const streak = AF.computeStreak(c.history);
+  const totalVolume = c.history.reduce((a,x)=>a+x.volume,0);
+  const prCount = Object.keys(c.prs).length;
+  const xp = Math.round(totalVolume/20 + prCount*150 + streak*20 + c.history.length*40);
+  const level = Math.floor(xp/1000)+1;
+  const xpIntoLevel = xp - (level-1)*1000;
+  return {xp, level, xpIntoLevel, xpForNext:1000, pct:Math.min(100,Math.round(xpIntoLevel/10))};
+};
+
+// Best/worst trained muscle by 30-day volume + this-month's best training month by volume.
+AF.computeHighlights = function(c, workouts){
+  const map = AF.keyMuscleMap(workouts);
+  const monthAgo = Date.now()-30*86400000;
+  const perMuscle = {};
+  Object.entries(c.exerciseLogs).forEach(([key,logs])=>{
+    const muscle = map[key]||'أخرى';
+    logs.forEach(l=>{ if(new Date(l.date).getTime()>=monthAgo) perMuscle[muscle]=(perMuscle[muscle]||0)+l.volume; });
+  });
+  const entries = Object.entries(perMuscle).sort((a,b)=>b[1]-a[1]);
+  const best = entries[0]?.[0]||null, worst = entries[entries.length-1]?.[0]||null;
+
+  const byMonth = {};
+  c.history.forEach(hh=>{ const d=new Date(hh.date); const k=d.getFullYear()+'-'+d.getMonth(); byMonth[k]=(byMonth[k]||0)+hh.volume; });
+  const bestMonthKey = Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0]?.[0];
+  const monthNames = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const bestMonth = bestMonthKey ? monthNames[+bestMonthKey.split('-')[1]] : null;
+
+  const byDow = {};
+  c.history.forEach(hh=>{ const dow = AF.satDow(hh.date); byDow[dow]=(byDow[dow]||0)+1; });
+  const dowNames = ['سبت','أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة'];
+  const bestDowKey = Object.entries(byDow).sort((a,b)=>b[1]-a[1])[0]?.[0];
+  const bestDow = bestDowKey!=null ? dowNames[+bestDowKey] : null;
+
+  const avgDuration = c.history.length ? Math.round(c.history.reduce((a,x)=>a+(x.durationMin||0),0)/c.history.filter(x=>x.durationMin).length) : null;
+
+  return {bestMuscle:best, worstMuscle:worst, bestMonth, bestDow, avgDuration:avgDuration||null};
+};

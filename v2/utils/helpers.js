@@ -30,6 +30,8 @@ AF.validateState = function(state){
 };
 
 AF.dateKey = function(d){ return new Date(d).toISOString().slice(0,10); };
+// Day-of-week index with the week starting Saturday (0=Saturday ... 6=Friday).
+AF.satDow = function(d){ return (new Date(d).getDay()+1)%7; };
 
 AF.computeStreak = function(history){
   if(!history.length) return 0;
@@ -58,15 +60,31 @@ AF.navyBodyFat = function({gender,height,waist,neck,hip}){
 
 // Mifflin-St Jeor TDEE + goal-adjusted macro targets
 AF.calcTargets = function(profile){
-  const {weight,height,age,gender,activity,goal} = profile;
+  const {weight,height,age,gender,activity,goal,bodyFatPercent} = profile;
   if(!height||!age) return null;
-  const bmr = gender==='female' ? (10*weight+6.25*height-5*age-161) : (10*weight+6.25*height-5*age+5);
+  let bmr;
+  if(bodyFatPercent){
+    // Katch-McArdle — more accurate when body fat % is known (uses lean body mass).
+    const lbm = weight*(1-(bodyFatPercent/100));
+    bmr = 370 + 21.6*lbm;
+  } else {
+    bmr = gender==='female' ? (10*weight+6.25*height-5*age-161) : (10*weight+6.25*height-5*age+5);
+  }
   let tdee = bmr*(+activity||1.55);
-  if(goal<weight) tdee*=0.85; else if(goal>weight) tdee*=1.1;
-  const calories = Math.round(tdee);
-  const protein = Math.round(weight*2);
-  const fat = Math.round(tdee*0.25/9);
-  const carb = Math.round(Math.max(0,(calories-protein*4-fat*9))/4);
+  let calories, protein, fat, carb;
+  if(bodyFatPercent){
+    if(goal<weight) tdee -= 500; else if(goal>weight) tdee += 300;
+    calories = Math.max(1200, Math.round(tdee));
+    protein = Math.round(weight*2.2);
+    fat = Math.round(weight*0.8);
+    carb = Math.round(Math.max(0,(calories-protein*4-fat*9))/4);
+  } else {
+    if(goal<weight) tdee*=0.85; else if(goal>weight) tdee*=1.1;
+    calories = Math.round(tdee);
+    protein = Math.round(weight*2);
+    fat = Math.round(tdee*0.25/9);
+    carb = Math.round(Math.max(0,(calories-protein*4-fat*9))/4);
+  }
   return {calories,protein,carb,fat};
 };
 

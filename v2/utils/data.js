@@ -128,6 +128,12 @@ AF.WORKOUTS = [
   {id:"optional",name:"اختياري",subtitle:"ظهر + ذراع + سواعد",groups:[["الظهر",[["Chest Supported Row",3,"8-12"],["Single Arm Lat Pulldown",3,"10-12"],["Straight Arm Pulldown",3,"12-15"]]],["الذراع",[["Hammer Curl",3,"10-12"],["Cable Curl",3,"10-12"],["Pushdown",3,"10-12"],["Overhead Extension",3,"10-12"]]],["السواعد",[["Reverse Curl",3,"10-12"],["Wrist Curl",3,"12-15"]]]]}
 ];
 
+// Large curated food DB (Albatil Foods v1.0, 1250+ items) loaded from foods-db.js, adapted to our {id,name,cal,protein,carb,fat} shape.
+AF.EXTERNAL_FOODS = (window.ALBATIL_FOODS_DB?.foods||[]).map(f=>({
+  id:f.id, name:f.name_ar,
+  cal:f.per_100g.calories, protein:f.per_100g.protein_g, carb:f.per_100g.carbs_g, fat:f.per_100g.fat_g
+}));
+
 AF.ACHIEVEMENTS = [
   {id:'first_workout',icon:'🥇',name:'أول حصة',desc:'أكملت أول تمرين',check:c=>c.history.length>=1},
   {id:'ten_workouts',icon:'🏋️',name:'10 حصص',desc:'أكملت 10 تمارين',check:c=>c.history.length>=10},

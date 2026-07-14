@@ -63,7 +63,7 @@ AF.App = function(){
   React.useEffect(()=>{
     const params = new URLSearchParams(location.search);
     if(params.get('start')==='workout'){
-      const idx = new Date().getDay()%3;
+      const idx = AF.satDow(new Date())%3;
       const workouts = cur().customWorkouts || AF.WORKOUTS;
       openWorkout(workouts[idx % workouts.length].id);
     }
