@@ -35,7 +35,7 @@ export default {
           body: JSON.stringify({
             contents,
             systemInstruction: body.system ? { parts: [{ text: body.system }] } : undefined,
-            generationConfig: { maxOutputTokens: 1024, temperature: 0.7 }
+            generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
           })
         }
       );

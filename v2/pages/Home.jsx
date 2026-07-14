@@ -77,6 +77,12 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
   const weightDelta = (firstWeight!=null) ? +(p.weight-firstWeight).toFixed(1) : null;
   const xpInfo = AF.computeXP(c);
   const initial = (c.name||'A').trim().charAt(0);
+  const weekAgo = Date.now()-7*86400000;
+  const weeklyGoalCount = c.weeklyGoals?.workouts || 3;
+  const weekSessionsCount = c.history.filter(hh=>new Date(hh.date).getTime()>=weekAgo).length;
+  const weekPct = Math.min(100, Math.round(weekSessionsCount/weeklyGoalCount*100));
+  const weightPoints = ms.slice(-8).map(m=>({y:m.weight, label:new Date(m.date).toLocaleDateString('ar-SA',{day:'numeric',month:'numeric'})}));
+  const goalDistancePct = (firstWeight!=null && p.goal!=null && firstWeight!==p.goal) ? Math.max(0,Math.min(100, Math.round((firstWeight-p.weight)/(firstWeight-p.goal)*100))) : null;
 
   return h(React.Fragment, null,
     draft ? h('div',{style:{
@@ -140,8 +146,10 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
 
     h(AF.Panel,{style:{borderColor:'rgba(201,162,39,.35)'}},
       h(AF.SectionTitle,{title:'🏋️ لوحة التمارين', right:'تمرين اليوم'}),
-      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
-        h('div',null,
+      h('div',{style:{display:'flex',alignItems:'center',gap:18}},
+        h(AF.RingChart,{percent:weekPct, label:weekSessionsCount, sub:`/ ${weeklyGoalCount}`, size:76, color:'#c9a227'}),
+        h('div',{style:{flex:1}},
+          h('span',{style:{color:'var(--muted)',fontSize:11,display:'block',marginBottom:4}},'حصص هذا الأسبوع'),
           h('b',{style:{fontSize:20,display:'block'}}, todayWorkout.name),
           h('span',{style:{color:'var(--muted)',fontSize:12}}, `الالتزام: ${streak} ${streak===1?'يوم':'أيام'}`)
         ),
@@ -165,12 +173,13 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
     h(AF.Panel,{style:{cursor:'pointer',borderColor:'rgba(47,163,116,.35)'}},
       h('div',{onClick:()=>showScreen('nutrition')},
         h(AF.SectionTitle,{title:'🍗 لوحة الأكل', right:'اليوم'}),
-        h('div',{style:{display:'flex',alignItems:'center',gap:18}},
+        h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-around',gap:8,flexWrap:'wrap'}},
           h(AF.RingChart,{percent:t.calories?Math.min(100,Math.round(todayNutrition.cal/t.calories*100)):0, label:Math.round(todayNutrition.cal), sub:'سعرة', size:76}),
-          h('div',{style:{flex:1,display:'grid',gap:8}},
-            h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:13}}, h('span',{style:{color:'var(--muted)'}},'السعرات'), h('b',null, `${Math.round(todayNutrition.cal)} / ${t.calories}`)),
-            h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:13}}, h('span',{style:{color:'var(--muted)'}},'البروتين'), h('b',null, `${Math.round(todayNutrition.protein)} / ${t.protein} جم`)),
-            h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:13}}, h('span',{style:{color:'var(--muted)'}},'الخطوات'), h('b',null, (dayLog.steps||0).toLocaleString('en-US')))
+          h(AF.RingChart,{percent:t.protein?Math.min(100,Math.round(todayNutrition.protein/t.protein*100)):0, label:Math.round(todayNutrition.protein), sub:'بروتين', size:64, color:'var(--accent2)'}),
+          h('div',{style:{textAlign:'center',fontSize:11,color:'var(--muted)'}},
+            h('div',null, `باقي ${Math.max(0,Math.round(t.calories-todayNutrition.cal))} سعرة`),
+            h('div',null, `باقي ${Math.max(0,Math.round(t.protein-todayNutrition.protein))} جم بروتين`),
+            h('div',null, `${(dayLog.steps||0).toLocaleString('en-US')} خطوة`)
           )
         )
       )
@@ -179,16 +188,14 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
     h(AF.Panel,{style:{cursor:'pointer',borderColor:'rgba(91,110,232,.35)'}},
       h('div',{onClick:()=>showScreen('progress')},
         h(AF.SectionTitle,{title:'📈 لوحة تغيّر الجسم', right:'التقدم'}),
-        h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}},
-          h('div',null, h('b',{style:{fontSize:18,display:'block'}}, p.weight), h('span',{style:{fontSize:11,color:'var(--muted)'}},'الوزن الحالي')),
-          h('div',{style:{borderRight:'1px solid var(--line)'}}, h('b',{style:{fontSize:18,display:'block'}}, p.goal), h('span',{style:{fontSize:11,color:'var(--muted)'}},'الهدف')),
-          h('div',{style:{borderRight:'1px solid var(--line)'}},
-            h('b',{style:{fontSize:18,display:'block',color:weightDelta==null?'var(--text)':(weightDelta<0?'var(--good)':(weightDelta>0?'var(--danger)':'var(--text)'))}},
-              weightDelta==null?'—':`${weightDelta>0?'+':''}${weightDelta}`
-            ),
-            h('span',{style:{fontSize:11,color:'var(--muted)'}},'التغير الكلي كجم')
-          )
-        )
+        weightPoints.length>=2 ? h(AF.LineChart,{points:weightPoints, unit:' كجم', color:'#5b6ee8'}) : h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'10px 0'}}, 'سجّل قياسين على الأقل ليظهر مسار وزنك'),
+        goalDistancePct!=null ? h('div',{style:{marginTop:12}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--muted)',marginBottom:4}}, h('span',null,`${p.weight} كجم`), h('span',null,`الهدف ${p.goal} كجم`)),
+          h('div',{style:{height:10,borderRadius:99,background:'var(--surface2)',overflow:'hidden'}},
+            h('div',{style:{height:'100%',borderRadius:99,width:goalDistancePct+'%',background:'linear-gradient(90deg, #5b6ee8, #8b7bff)',transition:'width .4s ease'}})
+          ),
+          h('div',{style:{textAlign:'center',fontSize:11,color:'var(--muted)',marginTop:4}}, `قطعت ${goalDistancePct}% من المسافة لهدفك`)
+        ) : null
       )
     )
   );
