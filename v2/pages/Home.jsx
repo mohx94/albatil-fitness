@@ -33,6 +33,19 @@ function buildCoachMessages(c, streak, todayWorkout, todayNutrition, t){
   return msgs;
 }
 
+// Bullet-style daily analysis for the "تحليل اليوم" card (distinct from the rotating chat line).
+function buildDailyAnalysis(c, streak, todayNutrition, t, recovery){
+  const items = [];
+  if(recovery.score>=80) items.push({icon:'✅', text:'جاهز لزيادة الأوزان اليوم'});
+  else if(recovery.score<50) items.push({icon:'⚠️', text:'جاهزيتك منخفضة — خفّف الشدة اليوم'});
+  const proteinGap = Math.max(0, Math.round(t.protein-todayNutrition.protein));
+  if(proteinGap>10) items.push({icon:'⚠️', text:`البروتين ناقص ${proteinGap} جم اليوم`});
+  const p = c.profile;
+  const waterTarget = p.weight ? +(p.weight*0.033).toFixed(1) : 2.5;
+  items.push({icon:'💧', text:`اشرب ${waterTarget} لتر ماء اليوم`});
+  return items.slice(0,4);
+}
+
 AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen}){
   const c = cur();
   const p = c.profile;
@@ -51,6 +64,8 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
   const t = c.nutrition.targets;
 
   const coachMsgs = React.useMemo(()=>buildCoachMessages(c, streak, todayWorkout, todayNutrition, t), [c.history.length, c.nutrition.logs.length, c.measurements.length]);
+  const recovery = AF.computeRecoveryScore(c);
+  const dailyAnalysis = React.useMemo(()=>buildDailyAnalysis(c, streak, todayNutrition, t, recovery), [c.history.length, c.nutrition.logs.length]);
   const [msgIdx, setMsgIdx] = React.useState(0);
   React.useEffect(()=>{
     const id = setInterval(()=>setMsgIdx(i=>(i+1)%coachMsgs.length), 7000);
@@ -87,6 +102,13 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
       h('div',{style:{flex:1}},
         h('span',{style:{display:'block',color:'var(--muted)',fontSize:11,marginBottom:4}},'المدرب الذكي'),
         h('span',{key:msgIdx, style:{display:'block',fontSize:14,lineHeight:1.6,animation:'coachFade .4s ease'}}, coachMsgs[msgIdx])
+      )
+    ),
+
+    h(AF.Panel,{style:{marginBottom:14}},
+      h(AF.SectionTitle,{title:'📊 تحليل اليوم'}),
+      h('div',{style:{display:'grid',gap:8,marginTop:6}},
+        dailyAnalysis.map((it,i)=>h('div',{key:i, style:{display:'flex',gap:8,alignItems:'center',fontSize:13}}, h('span',null,it.icon), h('span',null,it.text)))
       )
     ),
 

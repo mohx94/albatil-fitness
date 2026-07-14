@@ -191,6 +191,30 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
     const durationMin = Math.max(1, Math.round((Date.now()-sessionStartRef.current)/60000));
     const restTotalMin = Math.round(restStatsRef.current.total/60);
     const restMaxSec = restStatsRef.current.max;
+
+    // Build a quick post-workout report before saving.
+    const prevSessions = c.history.filter(hh=>hh.id===workout.id);
+    const prevAvgVolume = prevSessions.length ? prevSessions.reduce((a,x)=>a+x.volume,0)/prevSessions.length : null;
+    const volumeChangePct = prevAvgVolume ? Math.round((volume-prevAvgVolume)/prevAvgVolume*100) : null;
+    const allGroupsForReport = [...workout.groups, ...(extraGroups.length ? [['➕ إضافات الحصة', extraGroups.map(e=>[e.name])]] : [])];
+    const muscleVol = {};
+    allGroupsForReport.forEach(([g,list])=>list.forEach(([name])=>{
+      const key = workout.id+'__'+name;
+      const v = exerciseLogUpdates[key]?.volume||0;
+      if(v) muscleVol[g] = (muscleVol[g]||0)+v;
+    }));
+    const muscleEntries = Object.entries(muscleVol).sort((a,b)=>b[1]-a[1]);
+    const bestMuscle = muscleEntries[0]?.[0]||null;
+    const worstMuscle = muscleEntries[muscleEntries.length-1]?.[0]||null;
+    const completionRatio = liveTotal ? liveDone/liveTotal : 0;
+    let rirSum=0, rirCount=0;
+    Object.values(exerciseLogUpdates).forEach(v=>{ if(v.avgRir!=null){ rirSum+=v.avgRir; rirCount++; } });
+    const avgRir = rirCount ? rirSum/rirCount : null;
+    const prsThisSession = Object.keys(prUpdates).length;
+    let score = completionRatio*6 + (volumeChangePct!=null ? Math.max(0,Math.min(2,(volumeChangePct/10))) : 1) + Math.min(2,prsThisSession);
+    score = Math.max(0, Math.min(10, +score.toFixed(1)));
+    const report = {volume:Math.round(volume), volumeChangePct, bestMuscle, worstMuscle, score, prsThisSession, durationMin};
+
     mutate((next,p)=>{
       p.history.push({date:now, id:workout.id, name:workout.name, sets, volume, notes, durationMin, restTotalMin, restMaxSec, restCount:restStatsRef.current.count});
       Object.entries(prUpdates).forEach(([k,v])=>{ p.prs[k]=v; });
@@ -201,7 +225,7 @@ AF.SessionPage = function({cur, mutate, getWorkouts, currentWorkoutId, showScree
       p.draft = null;
     });
     toast('تم حفظ التمرين 💪');
-    setRatingPrompt({date:now});
+    setRatingPrompt({date:now, report});
   };
 
   const submitRating = ()=>{
