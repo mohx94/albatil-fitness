@@ -122,6 +122,7 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
   const xpInfo = AF.computeXP(c);
   const highlights = AF.computeHighlights(c, workouts);
   const [muscleDetail, setMuscleDetail] = React.useState(null);
+  const [bodyView, setBodyView] = React.useState('front');
   const allAchievements = AF.ACHIEVEMENTS.concat(AF.EXTRA_ACHIEVEMENTS);
   const muscleDaysSince = (muscle)=>{
     const dates = c.history.filter(hh=>{
@@ -334,7 +335,49 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
         )
       ) : null,
       h(AF.Panel,null,
-        h(AF.SectionTitle,{title:'🗺️ خريطة العضلات الحرارية', right:'اضغط لتفاصيل العضلة'}),
+        h(AF.SectionTitle,{title:'🧍 خريطة توازن الجسم', right:'اضغط على العضلة'}),
+        h('div',{style:{display:'flex',justifyContent:'center',gap:8,margin:'6px 0 14px'}},
+          [['front','أمامي'],['back','خلفي']].map(([v,label])=>h('button',{key:v, onClick:()=>setBodyView(v), style:{
+            fontSize:12,fontWeight:700,border:'1px solid '+(bodyView===v?'var(--accent)':'var(--line)'),
+            background:bodyView===v?'rgba(var(--accent-rgb),.12)':'var(--surface2)',color:'var(--text)',
+            borderRadius:99,padding:'6px 18px',cursor:'pointer'
+          }}, label))
+        ),
+        (()=>{
+          const positions = bodyView==='front' ? {
+            'الكتف':[[22,17],[78,17]], 'الصدر':[[50,24]], 'الباي':[[16,34],[84,34]],
+            'السواعد':[[10,50],[90,50]], 'الذراع':[[16,34],[84,34]], 'الأرجل':[[38,78],[62,78]]
+          } : {
+            'الكتف الخلفي':[[22,17],[78,17]], 'الظهر':[[50,26]], 'التراي':[[16,34],[84,34]],
+            'السواعد':[[10,50],[90,50]], 'الأرداف':[[50,52]], 'الأرجل':[[38,78],[62,78]]
+          };
+          const dots = [];
+          Object.entries(positions).forEach(([muscle,pts])=>{
+            if(!allMuscleGroups.includes(muscle)) return;
+            const days = muscleDaysSince(muscle);
+            const color = days==null?'var(--line)':(days<=2?'var(--good)':(days<=7?'var(--gold)':'var(--danger)'));
+            pts.forEach((pt,i)=>dots.push({muscle,x:pt[0],y:pt[1],color,key:muscle+i}));
+          });
+          return h('div',{style:{position:'relative',width:220,height:320,margin:'0 auto'}},
+            h('svg',{viewBox:'0 0 100 145', style:{position:'absolute',inset:0,width:'100%',height:'100%'}},
+              h('ellipse',{cx:50,cy:12,rx:11,ry:12,fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
+              h('path',{d:'M32 26 Q50 20 68 26 L74 70 Q50 78 26 70 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
+              h('path',{d:'M30 28 L14 65 L21 68 L36 32 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
+              h('path',{d:'M70 28 L86 65 L79 68 L64 32 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
+              h('path',{d:'M30 70 Q38 110 34 140 L44 140 Q48 108 50 76 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1}),
+              h('path',{d:'M70 70 Q62 110 66 140 L56 140 Q52 108 50 76 Z', fill:'var(--surface2)',stroke:'var(--line)',strokeWidth:1})
+            ),
+            dots.map(d=>h('button',{key:d.key, onClick:()=>setMuscleDetail(d.muscle), title:d.muscle, style:{
+              position:'absolute', left:d.x+'%', top:(d.y/145*100)+'%', transform:'translate(-50%,-50%)',
+              width:26,height:26,borderRadius:'50%',border:`2px solid ${d.color}`,background:d.color==='var(--line)'?'var(--surface)':'color-mix(in srgb, '+d.color+' 30%, var(--surface))',
+              cursor:'pointer',boxShadow:d.color!=='var(--line)'?`0 0 10px ${d.color}`:'none'
+            }}))
+          );
+        })(),
+        h('div',{style:{textAlign:'center',marginTop:10,fontSize:11,color:'var(--muted)'}}, '🟢 مدرّب مؤخرًا · 🟡 متوسط · 🔴 مهمل')
+      ),
+      h(AF.Panel,null,
+        h(AF.SectionTitle,{title:'📊 قائمة العضلات', right:'اضغط لتفاصيل العضلة'}),
         h('div',{style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8,marginTop:6}},
           allMuscleGroups.map(g=>{
             const days = muscleDaysSince(g);
