@@ -131,8 +131,8 @@ AF.CoachPage = function({cur, mutate, getWorkouts, showScreen}){
     const nextMsgs = [...chatMsgs, {role:'user', content:text}];
     setChatMsgs(nextMsgs);
     setChatInput('');
-    if(!window.claude || !window.claude.complete){
-      setChatMsgs(m=>[...m, {role:'assistant', content:'ميزة المحادثة الحرة تحتاج اتصال بذكاء Claude غير متوفر بهذه البيئة حاليًا.'}]);
+    if(!AF.getWorkerUrl() && !(window.claude && window.claude.complete)){
+      setChatMsgs(m=>[...m, {role:'assistant', content:'المحادثة الحرة تحتاج رابط Cloudflare Worker مضبوط من الإعدادات ليشتغل بعد الرفع على GitHub Pages.'}]);
       return;
     }
     setChatLoading(true);
@@ -145,8 +145,8 @@ ${JSON.stringify(buildUserContext())}
 - لا تكتب ذلك السطر إلا لما يكون في نيتك فعلاً تعديل الأرقام بعد موافقة المستخدم.
 - خلك مختصر ومباشر، بدون مقدمات طويلة.`;
     try{
-      const reply = await window.claude.complete({ system, messages: nextMsgs });
-      setChatMsgs(m=>[...m, {role:'assistant', content:reply}]);
+      const res = await AF.callAI({ system, messages: nextMsgs });
+      setChatMsgs(m=>[...m, {role:'assistant', content:res.text}]);
     }catch(e){
       setChatMsgs(m=>[...m, {role:'assistant', content:'تعذر الرد الآن، جرّب مرة ثانية.'}]);
     }

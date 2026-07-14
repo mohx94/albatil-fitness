@@ -2,6 +2,8 @@ window.AF = window.AF || {};
 
 AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, cloudReason, theme, setTheme, notifEnabled, setNotifEnabled}){
   const c = cur();
+  const [workerUrl, setWorkerUrlState] = React.useState(()=>AF.getWorkerUrl());
+  const saveWorkerUrl = ()=>{ AF.setWorkerUrl(workerUrl); toast(workerUrl?'✅ تم حفظ رابط المدرب الذكي':'تم إلغاء الرابط'); };
   const [settingsForm, setSettingsForm] = React.useState({
     name:c.name, weight:c.profile.weight, goal:c.profile.goal, fat:c.profile.fat,
     height:c.profile.height||'', age:c.profile.age||'', gender:c.profile.gender||'male', activity:c.profile.activity||1.55
@@ -324,6 +326,16 @@ AF.SettingsPage = function({state, cur, mutate, setState, toast, cloudUser, clou
       ) : null,
       h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}},
         'لتفعيل هذه الخاصية أنشئ مشروع Firebase مجاني وانسخ مفاتيحه بملف firebase-config.js — التفاصيل بملف README.'
+      )
+    ),
+
+    h(AF.Panel,null, h(AF.SectionTitle,{title:'🤖 محادثة المدرب الذكي الحرة', right: AF.getWorkerUrl()?'✅ مفعّلة':'غير مفعّلة'}),
+      h('label',{style:{fontSize:12,color:'var(--muted)'}},'رابط Cloudflare Worker',
+        h('input',{value:workerUrl, onChange:e=>setWorkerUrlState(e.target.value), placeholder:'https://your-worker.your-name.workers.dev', style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12,direction:'ltr',textAlign:'left'}})
+      ),
+      h(AF.PrimaryBtn,{onClick:saveWorkerUrl, style:{width:'100%',marginTop:10}}, 'حفظ الرابط'),
+      h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12,lineHeight:1.9}},
+        'المحادثة الحرة تحتاج Worker مجاني على Cloudflare يخفي مفتاح Gemini API عنك ولا يظهر بملفات GitHub. الكود جاهز بمجلد worker/cloudflare-worker.js مع خطوات النشر بالتعليقات — بعد نشره الصق رابط الـ Worker هنا. المدرب المحلي (Body Score، النصائح، اقتراح الأوزان) يبقى شغال دايمًا حتى بدون هذا الرابط.'
       )
     ),
 
