@@ -45,6 +45,23 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
     return `📈 توقع وزنك بعد أسبوعين إذا استمريت بنفس الوتيرة: ${val} كجم ${dir}`;
   },[c.measurements]);
 
+  // Weekly rate of loss/gain as % of body weight — healthy range is ~0.5%-1.0%/week.
+  const weeklyRate = React.useMemo(()=>{
+    const ms = c.measurements.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const cutoff = Date.now()-7*86400000;
+    const before = ms.filter(m=>new Date(m.date).getTime()<=cutoff);
+    const after = ms.filter(m=>new Date(m.date).getTime()>cutoff);
+    if(!before.length || !after.length) return null;
+    const w0 = before[before.length-1].weight, w1 = after[after.length-1].weight;
+    if(!w0) return null;
+    const pct = ((w0-w1)/w0)*100;
+    let quality, color;
+    const abs = Math.abs(pct);
+    if(abs<0.2) quality='شبه ثابت'; else if(abs>=0.5 && abs<=1.0) quality='معدل صحي ✅'; else if(abs>1.0) quality='سريع جدًا ⚠️ خطر فقدان عضل'; else quality='بطيء نسبيًا';
+    color = (abs>=0.5&&abs<=1.0)?'var(--good)':(abs>1.0?'var(--danger)':'var(--gold)');
+    return {pct:+pct.toFixed(2), quality, color, dropping:pct>0};
+  },[c.measurements]);
+
   // ---- Strength tab ----
   const workouts = getWorkouts();
   const keysWithLogs = AF.allExerciseKeys(workouts).filter(k=>(c.exerciseLogs[k]||[]).length>0);
@@ -56,10 +73,10 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
   const trainedDays = {};
   c.history.forEach(hh=>{ const k=AF.dateKey(hh.date); (trainedDays[k]=trainedDays[k]||[]).push(hh.name); });
   const first = new Date(calYear, calMonth, 1);
-  const startDow = first.getDay();
+  const startDow = AF.satDow(first);
   const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
   const todayKey = AF.dateKey(new Date());
-  const dowNames = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+  const dowNames = ['سبت','أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة'];
 
   // ---- Analytics tab ----
   const now = Date.now(), weekAgo = now-7*86400000, monthAgo = now-30*86400000;
@@ -143,7 +160,11 @@ AF.ProgressPage = function({cur, mutate, getWorkouts, toast}){
 
     tab==='weightTab' ? h(React.Fragment,null,
       h(AF.Panel,null, h(AF.LineChart,{points:weightPoints, unit:' كجم', color:'var(--accent2)'}),
-        forecast ? h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}}, forecast) : null
+        forecast ? h('div',{style:{fontSize:12,color:'var(--muted)',background:'var(--surface2)',border:'1px dashed var(--line)',borderRadius:12,padding:12,marginTop:12}}, forecast) : null,
+        weeklyRate ? h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',border:'1px solid '+weeklyRate.color,borderRadius:12,padding:'10px 14px',marginTop:10}},
+          h('span',{style:{fontSize:12,color:'var(--muted)'}}, 'معدل التغيّر الأسبوعي (جودة التنشيف)'),
+          h('b',{style:{color:weeklyRate.color,fontSize:13}}, `${weeklyRate.dropping?'-':'+'}${Math.abs(weeklyRate.pct)}% · ${weeklyRate.quality}`)
+        ) : null
       ),
       h('form',{onSubmit:submitMeasurement, style:{background:'linear-gradient(145deg, var(--surface), var(--panel-end))',border:'1px solid var(--line)',borderRadius:22,boxShadow:'var(--shadow)',padding:18,marginTop:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
         ['weight','fat','waist','neck','chest','arm','thigh','hip'].map(f=>{

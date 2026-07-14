@@ -37,7 +37,7 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
   const c = cur();
   const p = c.profile;
   const today = new Date();
-  const todayIndex = today.getDay()%3;
+  const todayIndex = AF.satDow(today)%3;
   const workouts = getWorkouts();
   const todayWorkout = workouts[todayIndex % workouts.length];
   const streak = AF.computeStreak(c.history);
@@ -98,6 +98,14 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
           h('span',{style:{color:'var(--muted)',fontSize:12}}, `الالتزام: ${streak} ${streak===1?'يوم':'أيام'}`)
         ),
         h(AF.PrimaryBtn,{onClick:()=>openWorkout(todayWorkout.id)}, 'ابدأ الآن')
+      ),
+      h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',marginTop:12,paddingTop:12,borderTop:'1px solid var(--line)'}},
+        h('span',{style:{fontSize:11,color:'var(--muted)',alignSelf:'center'}}, 'أو اختر يومك بنفسك:'),
+        workouts.map(w=>h('button',{key:w.id, onClick:()=>openWorkout(w.id), style:{
+          fontSize:12,border:'1px solid '+(w.id===todayWorkout.id?'var(--accent)':'var(--line)'),
+          background:w.id===todayWorkout.id?'rgba(var(--accent-rgb),.12)':'var(--surface2)',
+          color:'var(--text)',borderRadius:99,padding:'6px 14px',cursor:'pointer'
+        }}, w.name))
       ),
       last ? h('div',{style:{marginTop:14,paddingTop:14,borderTop:'1px solid var(--line)',display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}},
         h('div',null, h('b',{style:{fontSize:16,display:'block'}}, last.name), h('span',{style:{fontSize:11,color:'var(--muted)'}},'آخر تمرين')),

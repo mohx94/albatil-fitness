@@ -87,7 +87,7 @@ AF.CoachPage = function({cur, getWorkouts, showScreen}){
   const recovery = AF.computeRecoveryScore(c);
   const hour = new Date().getHours();
   const greetingWord = hour<12?'صباح الخير':(hour<18?'مساءك سعيد':'مساء الخير');
-  const todayWorkout = workouts[new Date().getDay()%3 % workouts.length];
+  const todayWorkout = workouts[AF.satDow(new Date())%3 % workouts.length];
   const topRec = recommendations[0];
   const greeting = `${greetingWord} ${c.name||''} 👋 اليوم عندك ${todayWorkout.name}. ${recovery.score>=80?'جاهزيتك ممتازة — وقت مناسب لمحاولة PR 🔥':(recovery.score<50?'جاهزيتك منخفضة شوي، خفّف الشدة اليوم.':'جاهزيتك عادية، درّب بشكل طبيعي.')}${topRec?' كمان: '+topRec:''}`;
 
