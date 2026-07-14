@@ -245,14 +245,15 @@ AF.NutritionPage = function({cur, mutate, toast}){
           h('input',{value:barcode, onChange:e=>setBarcode(e.target.value), placeholder:'ادخل رقم الباركود المحفوظ', style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}})),
         h('label',{style:{fontSize:12,color:'var(--muted)',alignSelf:'end'}},
           h(AF.SecondaryBtn,{onClick:toggleScan, style:{width:'100%',marginTop:6}}, scanning?'⏹️ إيقاف المسح':'📷 مسح بالكاميرا')),
-        h('label',{style:{fontSize:12,color:'var(--muted)',gridColumn:'1/-1',position:'relative'}},'الصنف',
+        h('div',{style:{fontSize:12,color:'var(--muted)',gridColumn:'1/-1',position:'relative'}},'الصنف',
           h('input',{
             value:foodQuery, onChange:e=>{setFoodQuery(e.target.value); setFoodListOpen(true);}, onFocus:()=>setFoodListOpen(true),
+            onBlur:()=>setTimeout(()=>setFoodListOpen(false), 150),
             placeholder:'ابحث بين أكثر من 1250 صنف...', autoComplete:'off',
             style:{width:'100%',marginTop:6,background:'var(--surface2)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)',padding:12}
           }),
           foodListOpen ? h('div',{style:{position:'absolute',top:'100%',right:0,left:0,zIndex:20,marginTop:4,maxHeight:260,overflowY:'auto',background:'var(--surface)',border:'1px solid var(--line)',borderRadius:12,boxShadow:'var(--shadow)'}},
-            filteredFoods.length ? filteredFoods.map(f=>h('div',{key:f.id, onClick:()=>pickFood(f), style:{padding:'10px 14px',borderBottom:'1px solid var(--line)',cursor:'pointer',fontSize:13,display:'flex',justifyContent:'space-between'}},
+            filteredFoods.length ? filteredFoods.map(f=>h('div',{key:f.id, onMouseDown:e=>{e.preventDefault(); pickFood(f);}, style:{padding:'10px 14px',borderBottom:'1px solid var(--line)',cursor:'pointer',fontSize:13,display:'flex',justifyContent:'space-between'}},
               h('span',null,f.name), h('small',{style:{color:'var(--muted)'}}, f.cal+' سعرة')
             )) : h('div',{style:{padding:'12px 14px',fontSize:12,color:'var(--muted)'}}, 'لا نتائج')
           ) : null
