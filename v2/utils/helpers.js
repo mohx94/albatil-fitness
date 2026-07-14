@@ -33,6 +33,15 @@ AF.dateKey = function(d){ return new Date(d).toISOString().slice(0,10); };
 // Day-of-week index with the week starting Saturday (0=Saturday ... 6=Friday).
 AF.satDow = function(d){ return (new Date(d).getDay()+1)%7; };
 
+// Total calories burned today from logged cardio/iron sessions (in-gym) + manual outside-gym entry.
+AF.dailyBurnBreakdown = function(c, dateKey){
+  const logs = (c.gymBurnLogs||[]).filter(l=>l.date===dateKey);
+  const cardio = logs.filter(l=>l.type==='cardio').reduce((a,l)=>a+l.calories,0);
+  const iron = logs.filter(l=>l.type==='iron').reduce((a,l)=>a+l.calories,0);
+  const external = c.dailyLog?.[dateKey]?.burn || 0;
+  return {cardio, iron, external, total: cardio+iron+external};
+};
+
 AF.computeStreak = function(history){
   if(!history.length) return 0;
   const days = new Set(history.map(h=>AF.dateKey(h.date)));

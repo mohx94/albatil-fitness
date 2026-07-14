@@ -86,7 +86,7 @@ AF.App = function(){
 
   let pageEl = null;
   if(screen==='home') pageEl = h(AF.HomePage,{state,cur,mutate,getWorkouts,openWorkout,showScreen});
-  else if(screen==='workouts') pageEl = h(AF.WorkoutsPage,{cur,getWorkouts,openWorkout,showScreen,advanceProgramWeek});
+  else if(screen==='workouts') pageEl = h(AF.WorkoutsPage,{cur,mutate,toast,getWorkouts,openWorkout,showScreen,advanceProgramWeek});
   else if(screen==='library') pageEl = h(AF.LibraryPage,{cur,mutate,getWorkouts,showScreen});
   else if(screen==='editSchedule') pageEl = h(AF.ScheduleEditorPage,{cur,mutate,getWorkouts,showScreen});
   else if(screen==='session') pageEl = h(AF.SessionPage,{cur,mutate,getWorkouts,currentWorkoutId,showScreen,playBeep,notifEnabled,toast,freeWorkout});

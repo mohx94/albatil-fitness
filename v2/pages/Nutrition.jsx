@@ -30,8 +30,9 @@ AF.NutritionPage = function({cur, mutate, toast}){
   const dayLogs = c.nutrition.logs.filter(l=>l.date===k);
   const totals = dayLogs.reduce((a,l)=>({cal:a.cal+l.cal, protein:a.protein+l.protein, carb:a.carb+l.carb, fat:a.fat+l.fat}), {cal:0,protein:0,carb:0,fat:0});
   const t = c.nutrition.targets;
-  const extra = c.dailyBurn?.[today]?.burn || 0;
+  const extra = AF.dailyBurnBreakdown(c, today).total;
   const calPct = Math.min(100, Math.round(totals.cal/Math.max(1,t.calories+extra)*100));
+  const netDiff = (t.calories+extra) - totals.cal; // positive = deficit (good if cutting), negative = surplus
 
   React.useEffect(()=>{
     if(!barcode.trim()) return;
@@ -209,6 +210,14 @@ AF.NutritionPage = function({cur, mutate, toast}){
             h('b',{style:{fontSize:11,whiteSpace:'nowrap'}}, `${Math.round(totals[f])} / ${t[f]} جم`)
           )
         )
+      )
+    ),
+
+    h(AF.Panel,null,
+      h(AF.SectionTitle,{title:'⚖️ معدل العجز/الفائض اليوم', right: extra?`+${extra} محروق`:''}),
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+        h('span',{style:{fontSize:13,color:'var(--muted)'}}, `${Math.round(totals.cal)} مأكول − (${t.calories} هدف + ${extra} محروق)`),
+        h('b',{style:{fontSize:18,color:netDiff>=0?'var(--good)':'var(--danger)'}}, `${netDiff>=0?'عجز ':'فائض '}${Math.abs(Math.round(netDiff))} سعرة`)
       )
     ),
 

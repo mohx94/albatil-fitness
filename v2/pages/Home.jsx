@@ -62,6 +62,8 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
   const todayNutrition = c.nutrition.logs.filter(l=>l.date===todayKey)
     .reduce((a,l)=>({cal:a.cal+l.cal, protein:a.protein+l.protein}), {cal:0,protein:0});
   const t = c.nutrition.targets;
+  const todayBurn = AF.dailyBurnBreakdown(c, todayKey);
+  const netDiff = (t.calories+todayBurn.total) - todayNutrition.cal;
 
   const coachMsgs = React.useMemo(()=>buildCoachMessages(c, streak, todayWorkout, todayNutrition, t), [c.history.length, c.nutrition.logs.length, c.measurements.length]);
   const recovery = AF.computeRecoveryScore(c);
@@ -155,6 +157,10 @@ AF.HomePage = function({state, cur, mutate, getWorkouts, openWorkout, showScreen
             h('div',null, `باقي ${Math.max(0,Math.round(t.protein-todayNutrition.protein))} جم بروتين`),
             h('div',null, `${(dayLog.steps||0).toLocaleString('en-US')} خطوة`)
           )
+        ),
+        h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12,paddingTop:12,borderTop:'1px solid var(--line)'}},
+          h('small',{style:{color:'var(--muted)'}}, `🔥 محروق اليوم: ${todayBurn.total}`),
+          h('b',{style:{fontSize:13,color:netDiff>=0?'var(--good)':'var(--danger)'}}, `${netDiff>=0?'عجز ':'فائض '}${Math.abs(Math.round(netDiff))}`)
         )
       )
     ),

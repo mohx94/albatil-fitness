@@ -11,7 +11,7 @@ AF.blankProfileData = function(){
     history:[], measurements:[], prs:{}, draft:null, exerciseLogs:{},
     nutrition:{logs:[],customFoods:[],targets:{calories:2200,protein:150,carb:220,fat:70}},
     mesocycle:{week:1,startedAt:new Date().toISOString()},
-    customWorkouts:null, videoLinks:{}, dailyBurn:{},
+    customWorkouts:null, videoLinks:{}, dailyBurn:{}, gymBurnLogs:[],
     dailyLog:{}, // {date: {sleep, steps, burn}}
     injuries:[], // [{id, part, pain(1-5), note, date}]
     weeklyGoals:{workouts:3, proteinDays:7, weightLossKg:0.5, steps:60000}
@@ -33,6 +33,7 @@ function migrateFrom(raw){
   p.videoLinks = raw.videoLinks || {};
   p.dailyBurn = raw.dailyBurn || {};
   p.dailyLog = raw.dailyLog || Object.fromEntries(Object.entries(raw.dailyBurn||{}).map(([d,v])=>[d,{sleep:null,steps:v.steps||0,burn:v.burn||0}]));
+  p.gymBurnLogs = raw.gymBurnLogs || [];
   p.injuries = raw.injuries || [];
   p.weeklyGoals = raw.weeklyGoals || {workouts:3, proteinDays:7, weightLossKg:0.5, steps:60000};
   return {activeProfile:"p1", profiles:{p1:p}};
